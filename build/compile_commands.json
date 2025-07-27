@@ -1,0 +1,56 @@
+[
+{
+  "directory": "J:/ArmsApprentice/wuyue_heng/0.reference/led_blink/build",
+  "command": "J:/arm_gcc/arm-gnu-toolchain-14.2.rel1-mingw-w64-i686-arm-none-eabi/bin/arm-none-eabi-gcc.exe -DDEBUG -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER -IJ:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Core/Inc -IJ:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Drivers/CMSIS/Device/ST/STM32F4xx/Include -IJ:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Drivers/CMSIS/Include -IJ:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Drivers/STM32F4xx_StdPeriph_Driver/inc  -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard  -x assembler-with-cpp -MMD -MP -g -o CMakeFiles/led_blink.dir/Drivers/CMSIS/Device/ST/STM32F4xx/Source/gcc_ride7/startup_stm32f40_41xxx.s.obj -c J:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Drivers/CMSIS/Device/ST/STM32F4xx/Source/gcc_ride7/startup_stm32f40_41xxx.s",
+  "file": "J:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Drivers/CMSIS/Device/ST/STM32F4xx/Source/gcc_ride7/startup_stm32f40_41xxx.s",
+  "output": "CMakeFiles/led_blink.dir/Drivers/CMSIS/Device/ST/STM32F4xx/Source/gcc_ride7/startup_stm32f40_41xxx.s.obj"
+},
+{
+  "directory": "J:/ArmsApprentice/wuyue_heng/0.reference/led_blink/build",
+  "command": "J:/arm_gcc/arm-gnu-toolchain-14.2.rel1-mingw-w64-i686-arm-none-eabi/bin/arm-none-eabi-gcc.exe -DDEBUG -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER -IJ:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Core/Inc -IJ:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Drivers/CMSIS/Device/ST/STM32F4xx/Include -IJ:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Drivers/CMSIS/Include -IJ:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Drivers/STM32F4xx_StdPeriph_Driver/inc  -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard  -Wall -Wextra -Wpedantic -fdata-sections -ffunction-sections -Wno-unused-parameter -O0 -g3 -std=gnu11 -o CMakeFiles/led_blink.dir/Core/Src/main.c.obj -c J:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Core/Src/main.c",
+  "file": "J:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Core/Src/main.c",
+  "output": "CMakeFiles/led_blink.dir/Core/Src/main.c.obj"
+},
+{
+  "directory": "J:/ArmsApprentice/wuyue_heng/0.reference/led_blink/build",
+  "command": "J:/arm_gcc/arm-gnu-toolchain-14.2.rel1-mingw-w64-i686-arm-none-eabi/bin/arm-none-eabi-gcc.exe -DDEBUG -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER -IJ:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Core/Inc -IJ:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Drivers/CMSIS/Device/ST/STM32F4xx/Include -IJ:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Drivers/CMSIS/Include -IJ:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Drivers/STM32F4xx_StdPeriph_Driver/inc  -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard  -Wall -Wextra -Wpedantic -fdata-sections -ffunction-sections -Wno-unused-parameter -O0 -g3 -std=gnu11 -o CMakeFiles/led_blink.dir/Core/Src/stm32f4xx_it.c.obj -c J:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Core/Src/stm32f4xx_it.c",
+  "file": "J:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Core/Src/stm32f4xx_it.c",
+  "output": "CMakeFiles/led_blink.dir/Core/Src/stm32f4xx_it.c.obj"
+},
+{
+  "directory": "J:/ArmsApprentice/wuyue_heng/0.reference/led_blink/build",
+  "command": "J:/arm_gcc/arm-gnu-toolchain-14.2.rel1-mingw-w64-i686-arm-none-eabi/bin/arm-none-eabi-gcc.exe -DDEBUG -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER -IJ:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Core/Inc -IJ:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Drivers/CMSIS/Device/ST/STM32F4xx/Include -IJ:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Drivers/CMSIS/Include -IJ:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Drivers/STM32F4xx_StdPeriph_Driver/inc  -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard  -Wall -Wextra -Wpedantic -fdata-sections -ffunction-sections -Wno-unused-parameter -O0 -g3 -std=gnu11 -o CMakeFiles/led_blink.dir/Drivers/CMSIS/Device/ST/STM32F4xx/Source/Templates/system_stm32f4xx.c.obj -c J:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Drivers/CMSIS/Device/ST/STM32F4xx/Source/Templates/system_stm32f4xx.c",
+  "file": "J:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Drivers/CMSIS/Device/ST/STM32F4xx/Source/Templates/system_stm32f4xx.c",
+  "output": "CMakeFiles/led_blink.dir/Drivers/CMSIS/Device/ST/STM32F4xx/Source/Templates/system_stm32f4xx.c.obj"
+},
+{
+  "directory": "J:/ArmsApprentice/wuyue_heng/0.reference/led_blink/build",
+  "command": "J:/arm_gcc/arm-gnu-toolchain-14.2.rel1-mingw-w64-i686-arm-none-eabi/bin/arm-none-eabi-gcc.exe -DDEBUG -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER -IJ:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Core/Inc -IJ:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Drivers/CMSIS/Device/ST/STM32F4xx/Include -IJ:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Drivers/CMSIS/Include -IJ:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Drivers/STM32F4xx_StdPeriph_Driver/inc  -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard  -Wall -Wextra -Wpedantic -fdata-sections -ffunction-sections -Wno-unused-parameter -O0 -g3 -std=gnu11 -o CMakeFiles/led_blink.dir/Core/Src/syscalls.c.obj -c J:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Core/Src/syscalls.c",
+  "file": "J:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Core/Src/syscalls.c",
+  "output": "CMakeFiles/led_blink.dir/Core/Src/syscalls.c.obj"
+},
+{
+  "directory": "J:/ArmsApprentice/wuyue_heng/0.reference/led_blink/build",
+  "command": "J:/arm_gcc/arm-gnu-toolchain-14.2.rel1-mingw-w64-i686-arm-none-eabi/bin/arm-none-eabi-gcc.exe -DDEBUG -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER -IJ:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Core/Inc -IJ:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Drivers/CMSIS/Device/ST/STM32F4xx/Include -IJ:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Drivers/CMSIS/Include -IJ:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Drivers/STM32F4xx_StdPeriph_Driver/inc  -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard  -Wall -Wextra -Wpedantic -fdata-sections -ffunction-sections -Wno-unused-parameter -O0 -g3 -std=gnu11 -o CMakeFiles/led_blink.dir/Core/Src/sysmem.c.obj -c J:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Core/Src/sysmem.c",
+  "file": "J:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Core/Src/sysmem.c",
+  "output": "CMakeFiles/led_blink.dir/Core/Src/sysmem.c.obj"
+},
+{
+  "directory": "J:/ArmsApprentice/wuyue_heng/0.reference/led_blink/build",
+  "command": "J:/arm_gcc/arm-gnu-toolchain-14.2.rel1-mingw-w64-i686-arm-none-eabi/bin/arm-none-eabi-gcc.exe -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER -IJ:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Drivers/STM32F4xx_StdPeriph_Driver/inc -IJ:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Drivers/CMSIS/Device/ST/STM32F4xx/Include -IJ:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Drivers/CMSIS/Include -IJ:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Core/Inc  -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard  -Wall -Wextra -Wpedantic -fdata-sections -ffunction-sections -Wno-unused-parameter -O0 -g3 -std=gnu11 -o cmake/stm32_stdperiph_driver/CMakeFiles/STM32_StdPeriph_Driver.dir/__/__/Drivers/STM32F4xx_StdPeriph_Driver/src/misc.c.obj -c J:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Drivers/STM32F4xx_StdPeriph_Driver/src/misc.c",
+  "file": "J:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Drivers/STM32F4xx_StdPeriph_Driver/src/misc.c",
+  "output": "cmake/stm32_stdperiph_driver/CMakeFiles/STM32_StdPeriph_Driver.dir/__/__/Drivers/STM32F4xx_StdPeriph_Driver/src/misc.c.obj"
+},
+{
+  "directory": "J:/ArmsApprentice/wuyue_heng/0.reference/led_blink/build",
+  "command": "J:/arm_gcc/arm-gnu-toolchain-14.2.rel1-mingw-w64-i686-arm-none-eabi/bin/arm-none-eabi-gcc.exe -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER -IJ:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Drivers/STM32F4xx_StdPeriph_Driver/inc -IJ:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Drivers/CMSIS/Device/ST/STM32F4xx/Include -IJ:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Drivers/CMSIS/Include -IJ:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Core/Inc  -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard  -Wall -Wextra -Wpedantic -fdata-sections -ffunction-sections -Wno-unused-parameter -O0 -g3 -std=gnu11 -o cmake/stm32_stdperiph_driver/CMakeFiles/STM32_StdPeriph_Driver.dir/__/__/Drivers/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_gpio.c.obj -c J:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Drivers/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_gpio.c",
+  "file": "J:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Drivers/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_gpio.c",
+  "output": "cmake/stm32_stdperiph_driver/CMakeFiles/STM32_StdPeriph_Driver.dir/__/__/Drivers/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_gpio.c.obj"
+},
+{
+  "directory": "J:/ArmsApprentice/wuyue_heng/0.reference/led_blink/build",
+  "command": "J:/arm_gcc/arm-gnu-toolchain-14.2.rel1-mingw-w64-i686-arm-none-eabi/bin/arm-none-eabi-gcc.exe -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER -IJ:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Drivers/STM32F4xx_StdPeriph_Driver/inc -IJ:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Drivers/CMSIS/Device/ST/STM32F4xx/Include -IJ:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Drivers/CMSIS/Include -IJ:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Core/Inc  -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard  -Wall -Wextra -Wpedantic -fdata-sections -ffunction-sections -Wno-unused-parameter -O0 -g3 -std=gnu11 -o cmake/stm32_stdperiph_driver/CMakeFiles/STM32_StdPeriph_Driver.dir/__/__/Drivers/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_rcc.c.obj -c J:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Drivers/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_rcc.c",
+  "file": "J:/ArmsApprentice/wuyue_heng/0.reference/led_blink/Drivers/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_rcc.c",
+  "output": "cmake/stm32_stdperiph_driver/CMakeFiles/STM32_StdPeriph_Driver.dir/__/__/Drivers/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_rcc.c.obj"
+}
+]

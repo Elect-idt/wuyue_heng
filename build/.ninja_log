@@ -1,0 +1,23 @@
+# ninja log v6
+432	1713	1753006151398443200	CMakeFiles/led_blink.dir/Drivers/CMSIS/Device/ST/STM32F4xx/Source/gcc_ride7/startup_stm32f40_41xxx.s.obj	267d5ddde1d954f
+605	1714	1753006151571982800	CMakeFiles/led_blink.dir/Core/Src/main.c.obj	e9afa69080429687
+769	1714	1753006151736538600	CMakeFiles/led_blink.dir/Core/Src/stm32f4xx_it.c.obj	d1be7fe125b88416
+129	1478	1753006151095933900	cmake/stm32_stdperiph_driver/CMakeFiles/STM32_StdPeriph_Driver.dir/__/__/Drivers/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_gpio.c.obj	8cde56e3d5fa03a0
+942	1715	1753006151908321800	CMakeFiles/led_blink.dir/Drivers/CMSIS/Device/ST/STM32F4xx/Source/Templates/system_stm32f4xx.c.obj	b5bf269701708380
+10	1477	1753006150976440400	cmake/stm32_stdperiph_driver/CMakeFiles/STM32_StdPeriph_Driver.dir/__/__/Drivers/STM32F4xx_StdPeriph_Driver/src/misc.c.obj	793defd3d9d83971
+2181	2603	1753006153147756200	led_blink.elf	25f7f7e23ac00c17
+273	1479	1753006151240937400	cmake/stm32_stdperiph_driver/CMakeFiles/STM32_StdPeriph_Driver.dir/__/__/Drivers/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_rcc.c.obj	28dec7d73b88063c
+1479	2180	1753006152446079800	cmake/stm32_stdperiph_driver/libSTM32_StdPeriph_Driver.a	5e972768385963e8
+1085	1778	1753006152052403100	CMakeFiles/led_blink.dir/Core/Src/syscalls.c.obj	d7e29588071228b1
+1277	1885	1753006152243740700	CMakeFiles/led_blink.dir/Core/Src/sysmem.c.obj	9ba7c6ed5043f874
+10	1398	1753006184125638300	cmake/stm32_stdperiph_driver/CMakeFiles/STM32_StdPeriph_Driver.dir/__/__/Drivers/STM32F4xx_StdPeriph_Driver/src/misc.c.obj	793defd3d9d83971
+123	1399	1753006184237919900	cmake/stm32_stdperiph_driver/CMakeFiles/STM32_StdPeriph_Driver.dir/__/__/Drivers/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_gpio.c.obj	8cde56e3d5fa03a0
+269	1400	1753006184383921000	cmake/stm32_stdperiph_driver/CMakeFiles/STM32_StdPeriph_Driver.dir/__/__/Drivers/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_rcc.c.obj	28dec7d73b88063c
+419	1555	1753006184534135100	CMakeFiles/led_blink.dir/Drivers/CMSIS/Device/ST/STM32F4xx/Source/gcc_ride7/startup_stm32f40_41xxx.s.obj	267d5ddde1d954f
+589	1556	1753006184704059400	CMakeFiles/led_blink.dir/Core/Src/main.c.obj	e9afa69080429687
+752	1557	1753006184866606800	CMakeFiles/led_blink.dir/Core/Src/stm32f4xx_it.c.obj	d1be7fe125b88416
+921	1558	1753006185036458800	CMakeFiles/led_blink.dir/Drivers/CMSIS/Device/ST/STM32F4xx/Source/Templates/system_stm32f4xx.c.obj	b5bf269701708380
+1076	1626	1753006185191909900	CMakeFiles/led_blink.dir/Core/Src/syscalls.c.obj	d7e29588071228b1
+1234	1704	1753006185348993500	CMakeFiles/led_blink.dir/Core/Src/sysmem.c.obj	9ba7c6ed5043f874
+1400	2050	1753006185515370400	cmake/stm32_stdperiph_driver/libSTM32_StdPeriph_Driver.a	5e972768385963e8
+2050	2449	1753006186165642800	led_blink.elf	25f7f7e23ac00c17
