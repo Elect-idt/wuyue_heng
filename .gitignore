@@ -6,6 +6,8 @@ build/
 
 # 3. 同时忽略编译产物和缓存文件（例如 CMake/Ninja）
 build/
+.vscode/
+.cache/
 *.o
 *.a
 *.so
