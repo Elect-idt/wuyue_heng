@@ -27,19 +27,16 @@ message("Build type: " ${CMAKE_BUILD_TYPE})
 enable_language(C ASM)
 
 # 修改点1：添加源文件到可执行目标
-add_executable(${CMAKE_PROJECT_NAME}
-    # 添加启动文件（必须至少有一个源文件）
-    ${CMAKE_SOURCE_DIR}/Drivers/CMSIS/Device/ST/STM32F4xx/Source/gcc_ride7/startup_stm32f40_41xxx.s
-)
+add_executable(${CMAKE_PROJECT_NAME})
 
 # 修改点2：添加标准库子目录
-add_subdirectory(cmake/stm32_stdperiph_driver)
+add_subdirectory(Drivers)
+add_subdirectory(Core)
 
 # 修改点3：添加应用程序源文件
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/Core/src/main.c
     ${CMAKE_SOURCE_DIR}/Core/src/stm32f4xx_it.c
-    ${CMAKE_SOURCE_DIR}/Drivers/CMSIS/Device/ST/STM32F4xx/Source/Templates/system_stm32f4xx.c
     ${CMAKE_SOURCE_DIR}/Core/src/syscalls.c
     ${CMAKE_SOURCE_DIR}/Core/src/sysmem.c
 )
@@ -47,9 +44,6 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
 # 修改点4：添加包含目录
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/Core/inc
-    ${CMAKE_SOURCE_DIR}/Drivers/CMSIS/Device/ST/STM32F4xx/Include
-    ${CMAKE_SOURCE_DIR}/Drivers/CMSIS/Include
-    ${CMAKE_SOURCE_DIR}/Drivers/STM32F4xx_StdPeriph_Driver/inc
 )
 
 # 修改点5：添加宏定义
@@ -62,7 +56,7 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
 # 修改点6：链接库
 target_link_libraries(${CMAKE_PROJECT_NAME}
     STM32_StdPeriph_Driver  # 标准外设库
-    stm32_interface         # 接口库（包含目录和宏定义）
+    stm32_periph_drivers_interface         # 接口库（包含目录和宏定义）
 )
 
 # 修改点7：设置链接脚本
