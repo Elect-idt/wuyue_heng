@@ -1,0 +1,15 @@
+# 1. 忽略根目录下的 build 文件夹（不处理子目录中的 build）
+build/
+
+# 2. 忽略所有层级的 build 文件夹（** 表示递归匹配）
+#**/build/
+
+# 3. 同时忽略编译产物和缓存文件（例如 CMake/Ninja）
+build/
+*.o
+*.a
+*.so
+*.out
+*.exe
+*.log
+.cache/
