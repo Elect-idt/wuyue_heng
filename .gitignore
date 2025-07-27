@@ -8,6 +8,7 @@ build/
 build/
 .vscode/
 .cache/
+.clang-format
 *.o
 *.a
 *.so

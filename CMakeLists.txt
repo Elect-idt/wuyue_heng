@@ -1,71 +1,69 @@
+# 设置 CMake 最低版本要求 (3.22)
 cmake_minimum_required(VERSION 3.22)
 
-# Setup compiler settings
-set(CMAKE_C_STANDARD 11)
-set(CMAKE_C_STANDARD_REQUIRED ON)
-set(CMAKE_C_EXTENSIONS ON)
+# 配置 C 编译器标准设置
+set(CMAKE_C_STANDARD 11)          # 强制使用 C11 标准
+set(CMAKE_C_STANDARD_REQUIRED ON)  # 必须严格遵守 C11 标准
+set(CMAKE_C_EXTENSIONS ON)         # 启用编译器扩展功能
 
-# Define the build type
+# 定义构建类型 (Debug/Release)
 if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE "Debug")
+    set(CMAKE_BUILD_TYPE "Debug")  # 若未指定构建类型，默认为 Debug 模式
 endif()
 
-# Set the project name
-set(CMAKE_PROJECT_NAME wuyue_heng)
+# 设置项目名称变量
+set(CMAKE_PROJECT_NAME wuyue_heng)  # 定义项目名称为 "wuyue_heng"
 
-# Include toolchain file
-include("cmake/gcc-arm-none-eabi.cmake")
+# 包含 ARM 交叉编译工具链配置
+include("cmake/gcc-arm-none-eabi.cmake")  # 加载 ARM Cortex-M 的 GCC 工具链配置
 
-# Enable compile command to ease indexing with e.g. clangd
-set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
+# 生成编译命令数据库 (用于 IDE 索引)
+set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)  # 生成 compile_commands.json 文件
 
-# Core project settings
-project(${CMAKE_PROJECT_NAME})
-message("Build type: " ${CMAKE_BUILD_TYPE})
+# 正式声明项目
+project(${CMAKE_PROJECT_NAME})  # 初始化项目，使用前面定义的名称
+message("Build type: " ${CMAKE_BUILD_TYPE})  # 打印当前构建类型
 
-# Enable CMake support for ASM and C languages
-enable_language(C ASM)
+# 启用 C 和汇编语言支持
+enable_language(C ASM)  # 告知 CMake 项目使用 C 和汇编语言
 
-# 修改点1：添加源文件到可执行目标
-add_executable(${CMAKE_PROJECT_NAME})
+# 创建可执行目标
+add_executable(${CMAKE_PROJECT_NAME})  # 生成名为 wuyue_heng 的可执行文件
 
-# 修改点2：添加标准库子目录
-add_subdirectory(Drivers)
-add_subdirectory(Core)
+# 添加标准外设库子目录
+add_subdirectory(Drivers)  # 编译 Drivers 目录下的库 (标准外设库)
+add_subdirectory(Bsp)  # 编译 Bsp 目录下的库 (Bsp库)
 
-# 修改点3：添加应用程序源文件
+# 添加应用程序源文件
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
-    ${CMAKE_SOURCE_DIR}/Core/src/main.c
-    ${CMAKE_SOURCE_DIR}/Core/src/stm32f4xx_it.c
-    ${CMAKE_SOURCE_DIR}/Core/src/syscalls.c
-    ${CMAKE_SOURCE_DIR}/Core/src/sysmem.c
+    ${CMAKE_SOURCE_DIR}/Core/src/main.c            # 主程序入口
+    ${CMAKE_SOURCE_DIR}/Core/src/stm32f4xx_it.c    # 中断服务程序
+    ${CMAKE_SOURCE_DIR}/Core/src/syscalls.c        # 系统调用重定向
+    ${CMAKE_SOURCE_DIR}/Core/src/sysmem.c          # 内存管理实现
+    ${CMAKE_SOURCE_DIR}/Core/src/SysTick.c         # SysTick定时器实现
+    
 )
 
-# 修改点4：添加包含目录
+# 添加头文件包含路径
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
-    ${CMAKE_SOURCE_DIR}/Core/inc
+    ${CMAKE_SOURCE_DIR}/Core/inc  # 包含项目核心头文件目录
 )
 
-# 修改点5：添加宏定义
+# 添加预处理器宏定义
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
-    STM32F40_41xxx
-    USE_STDPERIPH_DRIVER
-    $<$<CONFIG:Debug>:DEBUG>
+    STM32F40_41xxx            # 指定使用的 STM32 系列型号
+    USE_STDPERIPH_DRIVER      # 启用标准外设库
+    $<$<CONFIG:Debug>:DEBUG>  # Debug 模式下自动定义 DEBUG 宏
 )
 
-# 修改点6：链接库
+# 链接依赖库
 target_link_libraries(${CMAKE_PROJECT_NAME}
-    STM32_StdPeriph_Driver  # 标准外设库
-    stm32_periph_drivers_interface         # 接口库（包含目录和宏定义）
+    STM32_StdPeriph_Driver          # 链接标准外设库 (来自 Drivers)
+    STM32_Bsp_Driver                # 链接Bsp库 (来自 Bsp)
 )
 
-# 修改点7：设置链接脚本
-# set(LINKER_SCRIPT "${CMAKE_SOURCE_DIR}/STM32F405RGT6_FLASH.ld")
-# set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES
-#     LINK_FLAGS "-T \"${LINKER_SCRIPT}\""
-# )
-
-# 修改点8：清理文件
+# [修改点8] 设置构建后需清理的附加文件
 set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES 
-    ADDITIONAL_CLEAN_FILES "${CMAKE_PROJECT_NAME}.map;${CMAKE_PROJECT_NAME}.hex;${CMAKE_PROJECT_NAME}.bin"
+    ADDITIONAL_CLEAN_FILES 
+    "${CMAKE_PROJECT_NAME}.map;${CMAKE_PROJECT_NAME}.hex;${CMAKE_PROJECT_NAME}.bin"  # 清理生成的目标文件
 )

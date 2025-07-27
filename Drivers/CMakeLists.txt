@@ -1,39 +1,46 @@
-# 只保留标准外设库的构建部分
+# 设置 CMake 最低版本要求 (3.22)
 cmake_minimum_required(VERSION 3.22)
 
-# 标准外设库源文件
+# 定义标准外设库的源文件集合
 set(STM32_StdPeriph_Driver_Src
-    # 添加系统和时钟初始化头文件system_stm32f4xx.c
+    # 系统初始化文件 - 包含时钟配置等关键系统初始化代码
     ${CMAKE_SOURCE_DIR}/Drivers/CMSIS/Device/ST/STM32F4xx/Source/Templates/system_stm32f4xx.c
-    ${CMAKE_SOURCE_DIR}/Drivers/CMSIS/Device/ST/STM32F4xx/Source/gcc_ride7/startup_stm32f40_41xxx.s
-    # 添加其他需要的外设驱动
-    ${CMAKE_SOURCE_DIR}/Drivers/STM32F4xx_StdPeriph_Driver/src/misc.c
-    ${CMAKE_SOURCE_DIR}/Drivers/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_gpio.c
-    ${CMAKE_SOURCE_DIR}/Drivers/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_rcc.c
     
+    # ARM Cortex-M4 启动文件 - 使用 GCC/RIDE7 工具链的汇编启动代码
+    ${CMAKE_SOURCE_DIR}/Drivers/CMSIS/Device/ST/STM32F4xx/Source/gcc_ride7/startup_stm32f40_41xxx.s
+    
+    # 外设驱动源文件
+    ${CMAKE_SOURCE_DIR}/Drivers/STM32F4xx_StdPeriph_Driver/src/misc.c          # 杂项驱动 (NVIC, SysTick等)
+    ${CMAKE_SOURCE_DIR}/Drivers/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_gpio.c  # GPIO驱动
+    ${CMAKE_SOURCE_DIR}/Drivers/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_rcc.c   # 复位和时钟控制驱动
 )
 
-# 创建标准库外设接口库文件,管理Drivers下所有头文件目录
+# 创建接口库 (不生成实际库文件，仅管理头文件和宏定义)
 add_library(stm32_periph_drivers_interface INTERFACE)
 
-# 精准为stm32_periph_drivers_interface添加包含目录,比起include_directories（影响所有目标）更优
+# 为接口库添加头文件包含路径 (INTERFACE 表示这些路径会影响链接此库的目标)
 target_include_directories(stm32_periph_drivers_interface INTERFACE
-    # 添加CMSIS和STM32F4xx_StdPeriph_Driver目录
+    # 标准外设驱动头文件目录
     ${CMAKE_SOURCE_DIR}/Drivers/STM32F4xx_StdPeriph_Driver/inc
+    
+    # 芯片特定CMSIS头文件 (包含设备相关定义)
     ${CMAKE_SOURCE_DIR}/Drivers/CMSIS/Device/ST/STM32F4xx/Include
+    
+    # 核心CMSIS头文件 (包含ARM Cortex-M核心寄存器定义)
     ${CMAKE_SOURCE_DIR}/Drivers/CMSIS/Include
 )
-# 为stm32_periph_drivers_interface添加宏定义
+
+# 为接口库添加全局宏定义 (这些宏会影响所有使用此外设驱动的代码)
 target_compile_definitions(stm32_periph_drivers_interface INTERFACE
-    STM32F40_41xxx
-    USE_STDPERIPH_DRIVER
+    STM32F40_41xxx       # 指定芯片型号为 STM32F40x/41x 系列
+    USE_STDPERIPH_DRIVER  # 启用标准外设库 (在库头文件中会检查此宏)
 )
 
-# 创建标准外设库静态库文件
+# 创建实际的标准外设静态库 (将编译为 .a 文件)
 add_library(STM32_StdPeriph_Driver STATIC)
 
-# 为STM32_StdPeriph_Driver添加源文件
+# 将源文件添加到标准外设库目标
 target_sources(STM32_StdPeriph_Driver PRIVATE ${STM32_StdPeriph_Driver_Src})
 
-# 为STM32_StdPeriph_Driver库添加外设库的链接
+# 将接口库链接到标准外设库 (确保编译时能访问正确的头文件和宏定义)
 target_link_libraries(STM32_StdPeriph_Driver PUBLIC stm32_periph_drivers_interface)
