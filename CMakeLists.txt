@@ -11,7 +11,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # Set the project name
-set(CMAKE_PROJECT_NAME led_blink)
+set(CMAKE_PROJECT_NAME wuyue_heng)
 
 # Include toolchain file
 include("cmake/gcc-arm-none-eabi.cmake")
@@ -37,16 +37,16 @@ add_subdirectory(cmake/stm32_stdperiph_driver)
 
 # 修改点3：添加应用程序源文件
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
-    ${CMAKE_SOURCE_DIR}/Core/Src/main.c
-    ${CMAKE_SOURCE_DIR}/Core/Src/stm32f4xx_it.c
+    ${CMAKE_SOURCE_DIR}/Core/src/main.c
+    ${CMAKE_SOURCE_DIR}/Core/src/stm32f4xx_it.c
     ${CMAKE_SOURCE_DIR}/Drivers/CMSIS/Device/ST/STM32F4xx/Source/Templates/system_stm32f4xx.c
-    ${CMAKE_SOURCE_DIR}/Core/Src/syscalls.c
-    ${CMAKE_SOURCE_DIR}/Core/Src/sysmem.c
+    ${CMAKE_SOURCE_DIR}/Core/src/syscalls.c
+    ${CMAKE_SOURCE_DIR}/Core/src/sysmem.c
 )
 
 # 修改点4：添加包含目录
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
-    ${CMAKE_SOURCE_DIR}/Core/Inc
+    ${CMAKE_SOURCE_DIR}/Core/inc
     ${CMAKE_SOURCE_DIR}/Drivers/CMSIS/Device/ST/STM32F4xx/Include
     ${CMAKE_SOURCE_DIR}/Drivers/CMSIS/Include
     ${CMAKE_SOURCE_DIR}/Drivers/STM32F4xx_StdPeriph_Driver/inc

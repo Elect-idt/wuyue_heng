@@ -16,8 +16,8 @@ target_include_directories(stm32_interface INTERFACE
     ${CMAKE_SOURCE_DIR}/Drivers/CMSIS/Device/ST/STM32F4xx/Include
     ${CMAKE_SOURCE_DIR}/Drivers/CMSIS/Include
 
-    # 添加 Core/Inc 目录 - 这是关键修复
-    ${CMAKE_SOURCE_DIR}/Core/Inc
+    # 添加 Core/inc 目录 - 这是关键修复
+    ${CMAKE_SOURCE_DIR}/Core/inc
     
 )
 target_compile_definitions(stm32_interface INTERFACE

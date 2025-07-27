@@ -56,8 +56,8 @@ int main(void)
     while(1)
     {
         GPIOA_BSRR |= (1<<16<<8); 
-        Delay(0xFFFFF);
+        Delay(0x1FFFF);
         GPIOA_BSRR |= (1<<8);
-        Delay(0xFFFFF);
+        Delay(0x1FFFF);
     }
 }
