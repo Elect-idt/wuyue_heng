@@ -24,6 +24,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)  # 生成 compile_commands.json 文件
 project(${CMAKE_PROJECT_NAME})  # 初始化项目，使用前面定义的名称
 message("Build type: " ${CMAKE_BUILD_TYPE})  # 打印当前构建类型
 
+# -dD：输出所有宏定义 -Wp,-v：打印预处理器的详细搜索路径
+add_compile_options(-dD -Wp,-v)  
+
 # 启用 C 和汇编语言支持
 enable_language(C ASM)  # 告知 CMake 项目使用 C 和汇编语言
 
@@ -33,6 +36,8 @@ add_executable(${CMAKE_PROJECT_NAME})  # 生成名为 wuyue_heng 的可执行文
 # 添加标准外设库子目录
 add_subdirectory(Drivers)  # 编译 Drivers 目录下的库 (标准外设库)
 add_subdirectory(Bsp)  # 编译 Bsp 目录下的库 (Bsp库)
+add_subdirectory(FreeRTOS)  # 编译 FreeRTOS 目录下的库 (FreeRTOS库)
+add_subdirectory(Apps)  # 编译 apps 目录下的库 (apps库)
 
 # 添加应用程序源文件
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
@@ -60,6 +65,8 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
 target_link_libraries(${CMAKE_PROJECT_NAME}
     STM32_StdPeriph_Driver          # 链接标准外设库 (来自 Drivers)
     STM32_Bsp_Driver                # 链接Bsp库 (来自 Bsp)
+    FreeRTOS_Lib                    # 链接FreeRTOS库 (来自 FreeRTOS)
+    app_task_lib                    # 链接apps库 (来自 apps)
 )
 
 # [修改点8] 设置构建后需清理的附加文件

@@ -47,4 +47,4 @@ static void LED_GPIO_Config(void)
  * @param  无
  * @retval 无
  */
-void LED_Init(void) { LED_GPIO_Config(); }
+void Debug_LED_Init(void) { LED_GPIO_Config(); }

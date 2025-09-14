@@ -1,5 +1,5 @@
-#ifndef __bsp_LED_H
-#define __bsp_LED_H
+#ifndef __BSP_DEBUG_LED_H
+#define __BSP_DEBUG_LED_H
 
 /* 包含的头文件，除了系统文件外不建议放在这里，建议放在对应的源文件里 */
 #include "stm32f4xx.h"
@@ -34,7 +34,7 @@ else \
     GPIO_ResetBits(LED_R_PORT,LED_R_PIN)
 
 /****** API函数 ******/
-extern void LED_Init(void);
+extern void Debug_LED_Init(void);
 extern void Debug_LED_Ctrl(uint8_t color, uint8_t set_value);
 
 #endif

@@ -4,6 +4,8 @@ set(CMAKE_SYSTEM_NAME Generic)  # 表示目标平台是嵌入式系统，没有�
 # 指定目标处理器架构为ARM
 set(CMAKE_SYSTEM_PROCESSOR arm)  # 告知CMake目标平台使用ARM处理器架构
 
+# set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # 明确指定使用GNU编译器
 set(CMAKE_C_COMPILER_ID GNU)     # 指定C编译器为GNU GCC
 set(CMAKE_CXX_COMPILER_ID GNU)   # 指定C++编译器为GNU G++

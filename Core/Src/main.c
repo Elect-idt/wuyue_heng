@@ -14,22 +14,15 @@ static void System_Init(void)
     SysTick_Init(168);
     /* 4位抢占优先级 */
     NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
-
-    //    /* 能用PB3，PB4，PA15做普通IO，PA13&14用于SWD调试 */
-    //	RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO,ENABLE);
-    //	GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable, ENABLE);
 }
 
 int main(void)
 {
     System_Init();
-    Bsp_Init();
+    AppTaskCreate();
 
+    /* 正常不会执行到这里 */
     while (1)
     {
-        DEBUG_LED_RED(DEBUG_LED_ON);
-        Delay_S(2);
-        DEBUG_LED_RED(DEBUG_LED_OFF);
-        Delay_S(2);
     }
 }

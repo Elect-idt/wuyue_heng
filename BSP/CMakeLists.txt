@@ -38,4 +38,4 @@ add_library(STM32_Bsp_Driver STATIC)
 target_sources(STM32_Bsp_Driver PRIVATE ${STM32_Bsp_Src})
 
 # 将接口库链接到标准外设库 (确保编译时能访问正确的头文件和宏定义)
-target_link_libraries(STM32_Bsp_Driver PUBLIC stm32_bsp_interface stm32_periph_drivers_interface)
+target_link_libraries(STM32_Bsp_Driver PUBLIC stm32_bsp_interface STM32_StdPeriph_Driver)

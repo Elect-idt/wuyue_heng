@@ -15,6 +15,12 @@
 
 #include "bsp_init.h"
 
+void Bsp_LED_Init(void)
+{
+    /* LED 外设初始化 */
+    Debug_LED_Init();
+}
+
 /**
  * @brief  Bsp初始化
  * @note   无
@@ -24,5 +30,7 @@
 void Bsp_Init(void)
 {
     /* LED 外设初始化 */
-    LED_Init();
+    Debug_LED_Init();
+    /* Debug 串口初始化 */
+    Debug_USART_Init();
 }
