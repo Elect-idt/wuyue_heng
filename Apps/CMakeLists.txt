@@ -34,7 +34,6 @@ target_sources(app_task_lib PRIVATE ${App_Task_Src})
 
 # 将接口库链接到标准外设库 (确保编译时能访问正确的头文件和宏定义)
 target_link_libraries(app_task_lib PUBLIC 
-    STM32_Bsp_Driver 
-    stm32_bsp_interface 
-    STM32_StdPeriph_Driver 
+    Bsp_Driver 
+    bsp_common_interface 
     freertos_interface app_task_interface)

@@ -16,6 +16,13 @@ set(CMAKE_PROJECT_NAME wuyue_heng)  # 定义项目名称为 "wuyue_heng"
 
 # 包含 ARM 交叉编译工具链配置
 include("cmake/gcc-arm-none-eabi.cmake")  # 加载 ARM Cortex-M 的 GCC 工具链配置
+include("cmake/target_config.cmake")  # 加载平台配置
+
+# 设置平台相关宏
+if (PROJECT_PLATFORM STREQUAL "STM32F4")
+add_definitions(-DSTM32F4)
+else()
+endif()
 
 # 生成编译命令数据库 (用于 IDE 索引)
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)  # 生成 compile_commands.json 文件
@@ -56,15 +63,14 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
 
 # 添加预处理器宏定义
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
-    STM32F40_41xxx            # 指定使用的 STM32 系列型号
-    USE_STDPERIPH_DRIVER      # 启用标准外设库
+    # STM32F40_41xxx            # 指定使用的 STM32 系列型号
+    # USE_STDPERIPH_DRIVER      # 启用标准外设库
     $<$<CONFIG:Debug>:DEBUG>  # Debug 模式下自动定义 DEBUG 宏
 )
 
 # 链接依赖库
 target_link_libraries(${CMAKE_PROJECT_NAME}
-    STM32_StdPeriph_Driver          # 链接标准外设库 (来自 Drivers)
-    STM32_Bsp_Driver                # 链接Bsp库 (来自 Bsp)
+    Bsp_Driver                # 链接Bsp库 (来自 Bsp)
     FreeRTOS_Lib                    # 链接FreeRTOS库 (来自 FreeRTOS)
     app_task_lib                    # 链接apps库 (来自 apps)
 )

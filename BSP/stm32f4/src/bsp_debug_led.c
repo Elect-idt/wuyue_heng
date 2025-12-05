@@ -22,7 +22,7 @@
  * @param  无
  * @retval 无
  */
-static void LED_GPIO_Config(void)
+static void led_gpio_config(void)
 {
     /* 结构体宏定义 */
     GPIO_InitTypeDef GPIO_InitStructure;
@@ -47,4 +47,38 @@ static void LED_GPIO_Config(void)
  * @param  无
  * @retval 无
  */
-void Debug_LED_Init(void) { LED_GPIO_Config(); }
+bsp_status_e stm32f4_led_init(void)
+{
+    led_gpio_config();
+    return BSP_STAT_TRUE;
+}
+
+/**
+ * @brief  LED控制
+ * @note   无
+ * @param  无
+ * @retval 无
+ */
+bsp_status_e stm32f4_led_control(led_id_t id, led_state_e state)
+{
+    if (state == LED_OFF)
+    {
+        DEBUG_LED_RED(DEBUG_LED_OFF);
+    }
+    else if (state == LED_ON)
+    {
+        DEBUG_LED_RED(DEBUG_LED_ON);
+    }
+    else if (state == LED_TOGGLE)
+    {
+        DEBUG_LED_RED(DEBUG_LED_TOGGLE);
+    }
+    else
+    {
+        return BSP_STAT_ERROR;
+    }
+    return BSP_STAT_TRUE;
+}
+
+// 实例接口
+const led_ops_t stm32f4_led_driver = {.init = stm32f4_led_init, .control = stm32f4_led_control};

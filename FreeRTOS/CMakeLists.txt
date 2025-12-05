@@ -29,4 +29,4 @@ add_library(FreeRTOS_Lib STATIC)
 target_sources(FreeRTOS_Lib PRIVATE ${FreeRTOS_Src})
 
 # 将接口库链接到标准外设库 (确保编译时能访问正确的头文件和宏定义)
-target_link_libraries(FreeRTOS_Lib PUBLIC freertos_interface stm32_periph_drivers_interface stm32_bsp_interface)
+target_link_libraries(FreeRTOS_Lib PUBLIC freertos_interface periph_drivers_interface bsp_common_interface)

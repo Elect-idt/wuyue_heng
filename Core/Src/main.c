@@ -19,6 +19,7 @@ static void System_Init(void)
 int main(void)
 {
     System_Init();
+    Bsp_Init();
     AppTaskCreate();
 
     /* 正常不会执行到这里 */
