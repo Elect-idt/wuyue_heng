@@ -30,60 +30,64 @@ set(CMAKE_EXECUTABLE_SUFFIX_CXX ".elf")  # C++程序输出为.elf
 # 设置交叉编译模式（跳过编译器测试）
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)  # 加速配置过程，避免完整编译器测试
 
-#-----------------------------------------------------------
-# MCU特定编译标志
-# Cortex-M4核心 + FPU + 硬件浮点ABI
-set(TARGET_FLAGS "-mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard ")
+if (PROJECT_PLATFORM STREQUAL "STM32F4")
+    #-----------------------------------------------------------
+    # MCU特定编译标志
+    # Cortex-M4核心 + FPU + 硬件浮点ABI
+    set(TARGET_FLAGS "-mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard")
 
-# 应用目标标志到C编译器
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${TARGET_FLAGS}")
+    # 应用目标标志到C编译器
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${TARGET_FLAGS}")
 
-# 汇编器标志：启用汇编预处理，生成依赖文件
-set(CMAKE_ASM_FLAGS "${CMAKE_C_FLAGS} -x assembler-with-cpp -MMD -MP")
+    # 汇编器标志：启用汇编预处理，生成依赖文件
+    set(CMAKE_ASM_FLAGS "${CMAKE_C_FLAGS} -x assembler-with-cpp -MMD -MP")
 
-# C编译器附加标志：启用严格警告，分离数据/函数段
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Wpedantic -fdata-sections -ffunction-sections")
+    # C编译器附加标志：启用严格警告，分离数据/函数段
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Wpedantic -fdata-sections -ffunction-sections")
 
-# 调试/发布模式下的优化设置
-set(CMAKE_C_FLAGS_DEBUG "-O0 -g3")       # 调试模式：无优化，最大调试信息
-set(CMAKE_C_FLAGS_RELEASE "-Os -g0")     # 发布模式：尺寸优化，无调试信息
-set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g3")     # C++调试模式
-set(CMAKE_CXX_FLAGS_RELEASE "-Os -g0")   # C++发布模式
+    # 调试/发布模式下的优化设置
+    set(CMAKE_C_FLAGS_DEBUG "-O0 -g3")       # 调试模式：无优化，最大调试信息
+    set(CMAKE_C_FLAGS_RELEASE "-Os -g0")     # 发布模式：尺寸优化，无调试信息
+    set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g3")     # C++调试模式
+    set(CMAKE_CXX_FLAGS_RELEASE "-Os -g0")   # C++发布模式
 
-# C++编译器标志：禁用RTTI和异常，优化静态初始化
-set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -fno-rtti -fno-exceptions -fno-threadsafe-statics")
+    # C++编译器标志：禁用RTTI和异常，优化静态初始化
+    set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -fno-rtti -fno-exceptions -fno-threadsafe-statics")
 
-# 链接器标志配置
-set(CMAKE_C_LINK_FLAGS "${TARGET_FLAGS}")  # 继承目标架构标志
+    # 链接器标志配置
+    set(CMAKE_C_LINK_FLAGS "${TARGET_FLAGS}")  # 继承目标架构标志
 
-# 设置链接脚本路径（指定内存布局）
-set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -T \"${CMAKE_SOURCE_DIR}/STM32F405RGT6_FLASH.ld\"")
+    # 设置链接脚本路径（指定内存布局）
+    set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -T \"${CMAKE_SOURCE_DIR}/STM32F405RGT6_FLASH.ld\"")
 
-# 使用nano标准库（减小体积）
-set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} --specs=nano.specs")
+    # 使用nano标准库（减小体积）
+    set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} --specs=nano.specs")
 
-# 生成内存映射文件，启用无用段回收
-set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -Wl,-Map=${CMAKE_PROJECT_NAME}.map -Wl,--gc-sections")
+    # 生成内存映射文件，启用无用段回收
+    set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -Wl,-Map=${CMAKE_PROJECT_NAME}.map -Wl,--gc-sections")
 
-# 链接标准库（解决循环依赖）
-set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -Wl,--start-group -lc -lm -Wl,--end-group")
+    # 链接标准库（解决循环依赖）
+    set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -Wl,--start-group -lc -lm -Wl,--end-group")
 
-# 输出内存使用报告
-set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -Wl,--print-memory-usage")
+    # 输出内存使用报告
+    set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -Wl,--print-memory-usage")
 
-# C++链接器附加标准库支持
-set(CMAKE_CXX_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -Wl,--start-group -lstdc++ -lsupc++ -Wl,--end-group")
+    # C++链接器附加标准库支持
+    set(CMAKE_CXX_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -Wl,--start-group -lstdc++ -lsupc++ -Wl,--end-group")
 
-# 以下是有中文注释的部分，是cubemx不会自动生成的，需要手动添加
-# 支持printf打印浮点数
-set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -u _printf_float")
+    # 以下是有中文注释的部分，是cubemx不会自动生成的，需要手动添加
+    # 支持printf打印浮点数
+    set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -u _printf_float")
 
-# 链接数学库（解决浮点运算）
-set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -lm")
+    # 链接数学库（解决浮点运算）
+    set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -lm")
 
-# 禁用rwx段警告（常见于嵌入式系统）
-set(CMAKE_EXE_LINKER_FLAGS "-Wl,--gc-sections,--no-warn-rwx-segments")
+    # 禁用rwx段警告（常见于嵌入式系统）
+    set(CMAKE_EXE_LINKER_FLAGS "-Wl,--gc-sections,--no-warn-rwx-segments")
 
-# 忽略未使用参数的编译器警告
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-unused-parameter")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-parameter")
+    # 忽略未使用参数的编译器警告
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-unused-parameter")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-parameter")
+else()
+
+endif()

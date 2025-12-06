@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include "stm32f4xx.h"
 #include "SysTick.h"
-#include "bsp_init.h"
 #include "app_init.h"
 
 

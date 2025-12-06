@@ -16,16 +16,19 @@ add_library(Bsp_Driver STATIC)
 ######################### 解耦 ##############################
 if (PROJECT_PLATFORM STREQUAL "STM32F4")
     # 定义Bsp库的源文件集合
-    set(Bsp_Src
-        ${CMAKE_SOURCE_DIR}/Bsp/bsp_init.c
-    )
-    # Bsp Drivers源文件
-    aux_source_directory(${CMAKE_SOURCE_DIR}/Bsp/stm32f4/src Bsp_Src)
+    set(Bsp_Src ${CMAKE_SOURCE_DIR}/Bsp/bsp_interface.c)
+    aux_source_directory(${CMAKE_SOURCE_DIR}/Bsp/stm32f4 Bsp_Src)
+    # Bsp Drivers源文件 TODO:后面根据功能宏区分
+    aux_source_directory(${CMAKE_SOURCE_DIR}/Bsp/stm32f4/led Bsp_Src)
+    aux_source_directory(${CMAKE_SOURCE_DIR}/Bsp/stm32f4/usart Bsp_Src)
 
     # 为BSP库添加头文件包含路径 
     target_include_directories(Bsp_Driver PRIVATE
-        # Bsp Drivers头文件
-        ${CMAKE_SOURCE_DIR}/Bsp/stm32f4/inc
+        ${CMAKE_SOURCE_DIR}/Bsp/stm32f4/
+
+        # Bsp Drivers头文件 TODO:后面根据功能宏区分
+        ${CMAKE_SOURCE_DIR}/Bsp/stm32f4/led
+        ${CMAKE_SOURCE_DIR}/Bsp/stm32f4/usart
     )
 
     # 为StdPeriph_Driver库添加全局宏定义

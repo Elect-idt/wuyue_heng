@@ -14,6 +14,7 @@
  */
 
 #include "app_init.h"
+#include "bsp_interface.h"
 
 /**
   * @brief  主函数
@@ -24,6 +25,9 @@
   */
 int32_t AppTaskCreate(void)
 {
+    configASSERT(BSP_STAT_TRUE == Bsp_Init());
+    configASSERT(NULL != g_board_hw_bsp_);
+
     int32_t status = APP_TASK_SUCCESS;
     BaseType_t xReturn = pdPASS; /* 定义一个创建信息返回值，默认为pdPASS */
 
@@ -33,9 +37,9 @@ int32_t AppTaskCreate(void)
     xReturn = xTaskCreate((TaskFunction_t)Led_Status_Task, /* 任务入口函数 */
                           (const char*)"Led_Status_Task",  /* 任务名字 */
                           (uint16_t)256,                   /* 任务栈大小 */
-                          (void*)NULL,                     /* 任务入口函数参数 */
-                          (UBaseType_t)2,                  /* 任务的优先级 */
-                          (TaskHandle_t*)NULL);            /* 任务控制块指针 */
+                          (void*)NULL,          /* 任务入口函数参数 */
+                          (UBaseType_t)2,       /* 任务的优先级 */
+                          (TaskHandle_t*)NULL); /* 任务控制块指针 */
     if (pdPASS != xReturn)
     {
         status = APP_TASK_FAIL;

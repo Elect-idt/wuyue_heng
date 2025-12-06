@@ -15,8 +15,8 @@ endif()
 set(CMAKE_PROJECT_NAME wuyue_heng)  # 定义项目名称为 "wuyue_heng"
 
 # 包含 ARM 交叉编译工具链配置
-include("cmake/gcc-arm-none-eabi.cmake")  # 加载 ARM Cortex-M 的 GCC 工具链配置
 include("cmake/target_config.cmake")  # 加载平台配置
+include("cmake/gcc-arm-none-eabi.cmake")  # 加载 ARM Cortex-M 的 GCC 工具链配置
 
 # 设置平台相关宏
 if (PROJECT_PLATFORM STREQUAL "STM32F4")

@@ -45,9 +45,9 @@ static void led_gpio_config(void)
  * @brief  LED初始化
  * @note   无
  * @param  无
- * @retval 无
+ * @retval status:0 无错误；其他 有错误
  */
-bsp_status_e stm32f4_led_init(void)
+static bsp_status_e stm32f4_led_init(void)
 {
     led_gpio_config();
     return BSP_STAT_TRUE;
@@ -55,12 +55,17 @@ bsp_status_e stm32f4_led_init(void)
 
 /**
  * @brief  LED控制
- * @note   无
- * @param  无
- * @retval 无
+ * @note   目前只有一个LED灯，不对id做处理
+ * @param  id:需要控制的LED
+           state:开关
+ * @retval status:0 无错误；其他 有错误
  */
-bsp_status_e stm32f4_led_control(led_id_t id, led_state_e state)
+static bsp_status_e stm32f4_led_control(led_id_e id, led_state_e state)
 {
+    if (id != LED_ID_STATUS)
+    {
+        return BSP_STAT_CHOOSE_ERROR_TARGET;
+    }
     if (state == LED_OFF)
     {
         DEBUG_LED_RED(DEBUG_LED_OFF);
@@ -80,5 +85,7 @@ bsp_status_e stm32f4_led_control(led_id_t id, led_state_e state)
     return BSP_STAT_TRUE;
 }
 
-// 实例接口
-const led_ops_t stm32f4_led_driver = {.init = stm32f4_led_init, .control = stm32f4_led_control};
+// 定义具体的led接口，就是方法工厂中的具体工厂类，即CPP中定义抽象工厂基类的派生类
+const led_ops_t g_stm32f4_led_driver_ = {.name = "STM32F4_LED_DRIVER",
+                                         .init = stm32f4_led_init,
+                                         .control = stm32f4_led_control};

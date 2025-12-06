@@ -14,7 +14,7 @@
  */
 
 #include "led_status_app.h"
-#include "bsp_interface.h"
+#include <stdint.h>
 
 /***********************************
  *定义全局变量和函数
@@ -33,10 +33,27 @@ void Led_Status_Task(void* param)
     static portTickType PreviousWakeTime;
     PreviousWakeTime = xTaskGetTickCount();
 
+    // 遵循RAII，初始化led
+    configASSERT(BSP_STAT_TRUE == g_board_hw_bsp_->led_ops->init());
+
     while (1)
     {
         /* 1. 绝对延时，一秒调用一次 */
-        vTaskDelayUntil(&PreviousWakeTime, 5000);
-        Board.led_ops->control(LED_ID_STATUS, LED_TOGGLE);
+        printf("led control :%d\n", LED_TOGGLE);
+        g_board_hw_bsp_->usart_ops->usart_send_byte(USART_ID_DEBUG, 'a');
+        putchar('\n');
+        g_board_hw_bsp_->usart_ops->usart_send_string(USART_ID_DEBUG,
+                                                      "panjiale");
+        putchar('\n');
+        uint16_t hex = 0X4241;
+        g_board_hw_bsp_->usart_ops->usart_send_hex(USART_ID_DEBUG, hex);
+        putchar('\n');
+        uint8_t str[5] = {'a', 'b', 'c', 'd', '\0'};
+        g_board_hw_bsp_->usart_ops->usart_send_array(USART_ID_DEBUG, str, 5);
+        putchar('\n');
+
+        vTaskDelayUntil(&PreviousWakeTime, 1000);
+        configASSERT(BSP_STAT_TRUE == g_board_hw_bsp_->led_ops->control(
+                                          LED_ID_STATUS, LED_TOGGLE));
     }
 }
