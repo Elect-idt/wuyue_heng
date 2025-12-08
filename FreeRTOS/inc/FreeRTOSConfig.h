@@ -70,7 +70,6 @@
 #ifndef FREERTOS_CONFIG_H
 #define FREERTOS_CONFIG_H
 
-#include "stm32f4xx.h"
 #include <stdio.h>
 
 
@@ -302,7 +301,7 @@
 ****************************************************************/
 #define xPortPendSVHandler 	PendSV_Handler
 #define vPortSVCHandler 	SVC_Handler
-
+#define vPortSysTickHandler SysTick_Handler
 
 /* 以下为使用Percepio Tracealyzer需要的东西，不需要时将 configUSE_TRACE_FACILITY 定义为 0 */
 #if ( configUSE_TRACE_FACILITY == 1 )

@@ -21,6 +21,7 @@ if (PROJECT_PLATFORM STREQUAL "STM32F4")
     # Bsp Drivers源文件 TODO:后面根据功能宏区分
     aux_source_directory(${CMAKE_SOURCE_DIR}/Bsp/stm32f4/led Bsp_Src)
     aux_source_directory(${CMAKE_SOURCE_DIR}/Bsp/stm32f4/usart Bsp_Src)
+    aux_source_directory(${CMAKE_SOURCE_DIR}/Bsp/stm32f4/systick Bsp_Src)
 
     # 为BSP库添加头文件包含路径 
     target_include_directories(Bsp_Driver PRIVATE
@@ -29,6 +30,7 @@ if (PROJECT_PLATFORM STREQUAL "STM32F4")
         # Bsp Drivers头文件 TODO:后面根据功能宏区分
         ${CMAKE_SOURCE_DIR}/Bsp/stm32f4/led
         ${CMAKE_SOURCE_DIR}/Bsp/stm32f4/usart
+        ${CMAKE_SOURCE_DIR}/Bsp/stm32f4/systick
     )
 
     # 为StdPeriph_Driver库添加全局宏定义
@@ -36,6 +38,9 @@ if (PROJECT_PLATFORM STREQUAL "STM32F4")
         STM32F40_41xxx       # 指定芯片型号为 STM32F40x/41x 系列
         USE_STDPERIPH_DRIVER  # 启用标准外设库 (在库头文件中会检查此宏)
     )
+    
+    # 设置系统时钟
+    add_definitions(-DSYSCLK_MHZ=168)
 
 else()
 endif()

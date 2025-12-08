@@ -52,7 +52,6 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/Core/src/stm32f4xx_it.c    # 中断服务程序
     ${CMAKE_SOURCE_DIR}/Core/src/syscalls.c        # 系统调用重定向
     ${CMAKE_SOURCE_DIR}/Core/src/sysmem.c          # 内存管理实现
-    ${CMAKE_SOURCE_DIR}/Core/src/SysTick.c         # SysTick定时器实现
     
 )
 

@@ -128,18 +128,18 @@ void DebugMon_Handler(void) {}
  * @param  None
  * @retval None
  */
-extern void xPortSysTickHandler(void);
-void SysTick_Handler(void)
-{
-#if (INCLUDE_xTaskGetSchedulerState == 1)
-    if (xTaskGetSchedulerState() != taskSCHEDULER_NOT_STARTED)
-    {
-#endif /* INCLUDE_xTaskGetSchedulerState */
-        xPortSysTickHandler();
-#if (INCLUDE_xTaskGetSchedulerState == 1)
-    }
-#endif /* INCLUDE_xTaskGetSchedulerState */
-}
+// extern void xPortSysTickHandler(void);
+// void SysTick_Handler(void)
+// {
+// #if (INCLUDE_xTaskGetSchedulerState == 1)
+//     if (xTaskGetSchedulerState() != taskSCHEDULER_NOT_STARTED)
+//     {
+// #endif /* INCLUDE_xTaskGetSchedulerState */
+//         xPortSysTickHandler();
+// #if (INCLUDE_xTaskGetSchedulerState == 1)
+//     }
+// #endif /* INCLUDE_xTaskGetSchedulerState */
+// }
 
 /******************************************************************************/
 /*                 STM32F4xx Peripherals Interrupt Handlers                   */

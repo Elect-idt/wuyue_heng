@@ -40,6 +40,7 @@ bsp_status_e Bsp_Init(void)
     // 重要的外设在这里初始化，其他外设RAII
     // 调试串口初始化
     status |= g_board_hw_bsp_->usart_ops->init(USART_ID_DEBUG);
+    status |= g_board_hw_bsp_->systick_ops->init(SYSTICK_ID_DEFAULT, SYSCLK_MHZ);
 
     return status;
 }
