@@ -14,7 +14,8 @@ typedef enum
     USART_ID_MAX       = 3,         // MAX
 } uasrt_id_e;
 
-// 核心解耦：定义操作函数指针结构体，其实就是工厂接口，CPP中的方法工厂基类
+// 核心解耦：USART外设驱动接口，定义USART的统一操作方法，不同平台实现各自的驱动实例
+// [C++对照] 对应抽象产品(Abstract Product)，类似于含纯虚函数的基类
 typedef struct
 {
     // 驱动名称

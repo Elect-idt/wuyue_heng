@@ -4,7 +4,7 @@
  * @author  Pan
  * @version V1.0
  * @date    2025-12-06
- * @brief   UASRT驱动
+ * @brief   USART驱动
  ******************************************************************************
  * @attention
  *
@@ -31,8 +31,7 @@ static void usart_gpio_config(uasrt_id_e id)
     case USART_ID_DEBUG:
     {
         /* 开启时钟 */
-        DEBUG_USART_GPIO_CLK_CMD(DEBUG_USART_TX_CLK | DEBUG_USART_RX_CLK,
-                                 ENABLE);
+        DEBUG_USART_GPIO_CLK_CMD(DEBUG_USART_TX_CLK | DEBUG_USART_RX_CLK, ENABLE);
         /* IO口内部用一个弱上拉增加带载能力 */
         GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
         GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
@@ -46,11 +45,9 @@ static void usart_gpio_config(uasrt_id_e id)
         GPIO_InitStructure.GPIO_Pin = DEBUG_USART_RX_PIN;
         GPIO_Init(DEBUG_USART_RX_PORT, &GPIO_InitStructure);
         /* 连接 PXX 到 USARTX_Tx */
-        GPIO_PinAFConfig(DEBUG_USART_TX_PORT, DEBUG_USART_TX_PINSRC,
-                         DEBUG_USART_TX_AF);
+        GPIO_PinAFConfig(DEBUG_USART_TX_PORT, DEBUG_USART_TX_PINSRC, DEBUG_USART_TX_AF);
         /*  连接 PXX 到 USARTX_Rx */
-        GPIO_PinAFConfig(DEBUG_USART_RX_PORT, DEBUG_USART_RX_PINSRC,
-                         DEBUG_USART_RX_AF);
+        GPIO_PinAFConfig(DEBUG_USART_RX_PORT, DEBUG_USART_RX_PINSRC, DEBUG_USART_RX_AF);
     }
     break;
     case USART_ID_BLT:
@@ -70,18 +67,15 @@ static void usart_gpio_config(uasrt_id_e id)
         GPIO_InitStructure.GPIO_Pin = BLT_USART_RX_PIN;
         GPIO_Init(BLT_USART_RX_PORT, &GPIO_InitStructure);
         /* 连接 PXX 到 USARTX_Tx */
-        GPIO_PinAFConfig(BLT_USART_TX_PORT, BLT_USART_TX_PINSRC,
-                         BLT_USART_TX_AF);
+        GPIO_PinAFConfig(BLT_USART_TX_PORT, BLT_USART_TX_PINSRC, BLT_USART_TX_AF);
         /*  连接 PXX 到 USARTX_Rx */
-        GPIO_PinAFConfig(BLT_USART_RX_PORT, BLT_USART_RX_PINSRC,
-                         BLT_USART_RX_AF);
+        GPIO_PinAFConfig(BLT_USART_RX_PORT, BLT_USART_RX_PINSRC, BLT_USART_RX_AF);
     }
     break;
     case USART_ID_FINGER:
     {
         /* 开启时钟 */
-        FINGER_USART_GPIO_CLK_CMD(FINGER_USART_TX_CLK | FINGER_USART_RX_CLK,
-                                  ENABLE);
+        FINGER_USART_GPIO_CLK_CMD(FINGER_USART_TX_CLK | FINGER_USART_RX_CLK, ENABLE);
         /* IO口内部用一个弱上拉增加带载能力 */
         GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
         GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
@@ -95,11 +89,9 @@ static void usart_gpio_config(uasrt_id_e id)
         GPIO_InitStructure.GPIO_Pin = FINGER_USART_RX_PIN;
         GPIO_Init(FINGER_USART_RX_PORT, &GPIO_InitStructure);
         /* 连接 PXX 到 USARTX_Tx */
-        GPIO_PinAFConfig(FINGER_USART_TX_PORT, FINGER_USART_TX_PINSRC,
-                         FINGER_USART_TX_AF);
+        GPIO_PinAFConfig(FINGER_USART_TX_PORT, FINGER_USART_TX_PINSRC, FINGER_USART_TX_AF);
         /*  连接 PXX 到 USARTX_Rx */
-        GPIO_PinAFConfig(FINGER_USART_RX_PORT, FINGER_USART_RX_PINSRC,
-                         FINGER_USART_RX_AF);
+        GPIO_PinAFConfig(FINGER_USART_RX_PORT, FINGER_USART_RX_PINSRC, FINGER_USART_RX_AF);
     }
     break;
     default:
@@ -129,8 +121,7 @@ static void usart_base_config(uasrt_id_e id)
         USART_InitStructure.USART_WordLength = USART_WordLength_8b;
         USART_InitStructure.USART_StopBits = USART_StopBits_1;
         USART_InitStructure.USART_Parity = USART_Parity_No;
-        USART_InitStructure.USART_HardwareFlowControl =
-            USART_HardwareFlowControl_None;
+        USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
         USART_InitStructure.USART_Mode = USART_Mode_Tx | USART_Mode_Rx;
         USART_Init(DEBUG_USART, &USART_InitStructure);
         /* 失能串口接收中断 */
@@ -154,8 +145,7 @@ static void usart_base_config(uasrt_id_e id)
         USART_InitStructure.USART_WordLength = USART_WordLength_8b;
         USART_InitStructure.USART_StopBits = USART_StopBits_1;
         USART_InitStructure.USART_Parity = USART_Parity_No;
-        USART_InitStructure.USART_HardwareFlowControl =
-            USART_HardwareFlowControl_None;
+        USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
         USART_InitStructure.USART_Mode = USART_Mode_Tx | USART_Mode_Rx;
         USART_Init(BLT_USART, &USART_InitStructure);
         /* 失能串口接收中断 */
@@ -179,8 +169,7 @@ static void usart_base_config(uasrt_id_e id)
         USART_InitStructure.USART_WordLength = USART_WordLength_8b;
         USART_InitStructure.USART_StopBits = USART_StopBits_1;
         USART_InitStructure.USART_Parity = USART_Parity_No;
-        USART_InitStructure.USART_HardwareFlowControl =
-            USART_HardwareFlowControl_None;
+        USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
         USART_InitStructure.USART_Mode = USART_Mode_Tx | USART_Mode_Rx;
         USART_Init(FINGER_USART, &USART_InitStructure);
         /* 失能串口接收中断 */
@@ -413,8 +402,7 @@ static bsp_status_e stm32f4_usart_send_hex(uasrt_id_e id, uint16_t hex)
  * @param  ch:要发送的字节
  * @retval status:0 无错误；其他 有错误
  */
-static bsp_status_e stm32f4_usart_send_array(uasrt_id_e id, uint8_t* array,
-                                             uint16_t num)
+static bsp_status_e stm32f4_usart_send_array(uasrt_id_e id, uint8_t* array, uint16_t num)
 {
     uint8_t i;
 
@@ -480,9 +468,11 @@ int _write(int file, char* ptr, int len)
     return len;
 }
 
-// 定义具体的led接口，就是方法工厂中的具体工厂类，即CPP中定义抽象工厂基类的派生类
+// STM32F4平台USART驱动实例，实现usart_ops_t定义的统一操作接口
+// [C++对照] 对应具体产品(Concrete Product)
+// 注：C中无继承，具体产品与抽象产品是同一类型，区别仅为函数指针指向了具体实现（类似填好的虚表）
 const usart_ops_t g_stm32f4_usart_driver_ = {
-    .name = "STM32F4_UASRT_DRIVER",
+    .name = "STM32F4_USART_DRIVER",
     .init = stm32f4_uasrt_init,
     .usart_send_byte = stm32f4_usart_send_byte,
     .usart_send_string = stm32f4_usart_send_string,

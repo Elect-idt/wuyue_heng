@@ -33,7 +33,7 @@ add_library(app_task_lib STATIC)
 target_sources(app_task_lib PRIVATE ${App_Task_Src})
 
 # 将接口库链接到标准外设库 (确保编译时能访问正确的头文件和宏定义)
-target_link_libraries(app_task_lib PUBLIC 
-    Bsp_Driver                      # 外设驱动库
+target_link_libraries(app_task_lib PUBLIC
+    Bsp_Driver                      # 链接BSP驱动（CMake据此确定链接顺序）
     FreeRTOS_Lib                    # 链接FreeRTOS库 (来自 FreeRTOS)
     app_task_interface)

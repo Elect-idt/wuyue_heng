@@ -5,6 +5,8 @@ CompileFlags:
     - -IJ:/arm_gcc/arm-gnu-toolchain-14.2.rel1-mingw-w64-i686-arm-none-eabi/lib/gcc/arm-none-eabi/14.2.1/include  # GCC库头文件
     - -Wno-incomplete-enum  # 忽略不完整枚举类型的警告
     - -mfpu=fpv4-sp-d16
+    - -Wno-unused-but-set-variable
+    - -Wno-unused-function
   CompilationDatabase: ./build              # 指向compile_commands.json
   Remove:
         - "mthumb-interwork"

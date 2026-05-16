@@ -85,7 +85,8 @@ static bsp_status_e stm32f4_led_control(led_id_e id, led_state_e state)
     return BSP_STAT_TRUE;
 }
 
-// 定义具体的led接口，就是方法工厂中的具体工厂类，即CPP中定义抽象工厂基类的派生类
-const led_ops_t g_stm32f4_led_driver_ = {.name = "STM32F4_LED_DRIVER",
-                                         .init = stm32f4_led_init,
-                                         .control = stm32f4_led_control};
+// STM32F4平台LED驱动实例，实现led_ops_t定义的统一操作接口
+// [C++对照] 对应具体产品(Concrete Product)
+// 注：C中无继承，具体产品与抽象产品是同一类型，区别仅为函数指针指向了具体实现（类似填好的虚表）
+const led_ops_t g_stm32f4_led_driver_ = {
+    .name = "STM32F4_LED_DRIVER", .init = stm32f4_led_init, .control = stm32f4_led_control};

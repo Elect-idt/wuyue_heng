@@ -18,11 +18,14 @@
 // 全局单例对象实例化
 const board_hw_bsp_t* g_board_hw_bsp_ = NULL;
 
-// 选择对应的实例化接口，就是方法工厂中的实例化，即CPP中抽象工厂基类指针=new派生工厂的操作
+// 根据目标平台选择对应的板级BSP描述符，实现平台切换
+// [C++对照] 类似于依赖注入：将具体工厂的引用赋给抽象工厂指针，即 Base* ptr = new Derived()
+// 此处只包含具体的驱动声明，只声明变量，不包含硬件头文件
 #if defined(STM32F4)
-#include "stm32f4_bsp.h"
+extern const board_hw_bsp_t g_stm32f4_bsp_;
 #define BSP_DRIVER_INTERFACE g_stm32f4_bsp_
 #else
+#error "No platform selected"
 #endif
 
 /**
@@ -34,8 +37,11 @@ const board_hw_bsp_t* g_board_hw_bsp_ = NULL;
 bsp_status_e Bsp_Init(void)
 {
     bsp_status_e status = BSP_STAT_TRUE;
-    // 外设驱动挂载，相当于cpp 基类抽象工厂指针 = new 派生类工厂
+    // 挂载当前平台的板级BSP描述符（依赖注入）
     g_board_hw_bsp_ = &BSP_DRIVER_INTERFACE;
+
+    // 平台级全局配置（中断分组等），必须在所有外设初始化之前
+    status |= g_board_hw_bsp_->platform_init();
 
     // 重要的外设在这里初始化，其他外设RAII
     // 调试串口初始化

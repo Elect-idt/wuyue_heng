@@ -10,20 +10,31 @@ target_include_directories(bsp_common_interface INTERFACE
     ${CMAKE_SOURCE_DIR}/Bsp
 )
 
-# 创建实际的标准外设静态库 (将编译为 .a 文件)
+# ===== 平台无关层：BSP接口调度 =====
+# OBJECT库：独立编译（保持编译隔离，不依赖stm32等库），不生成独立.a文件
+# 编译时只链接 bsp_common_interface，无法 include 平台头文件
+add_library(Bsp_Interface OBJECT)
+
+target_sources(Bsp_Interface PRIVATE
+    ${CMAKE_SOURCE_DIR}/Bsp/bsp_interface.c
+)
+
+target_link_libraries(Bsp_Interface PUBLIC bsp_common_interface)
+
+# ===== 平台相关层：具体硬件驱动 =====
 add_library(Bsp_Driver STATIC)
 
 ######################### 解耦 ##############################
 if (PROJECT_PLATFORM STREQUAL "STM32F4")
-    # 定义Bsp库的源文件集合
-    set(Bsp_Src ${CMAKE_SOURCE_DIR}/Bsp/bsp_interface.c)
-    aux_source_directory(${CMAKE_SOURCE_DIR}/Bsp/stm32f4 Bsp_Src)
+    # 定义Bsp平台源文件集合
+    set(Bsp_Platform_Src)
+    aux_source_directory(${CMAKE_SOURCE_DIR}/Bsp/stm32f4 Bsp_Platform_Src)
     # Bsp Drivers源文件 TODO:后面根据功能宏区分
-    aux_source_directory(${CMAKE_SOURCE_DIR}/Bsp/stm32f4/led Bsp_Src)
-    aux_source_directory(${CMAKE_SOURCE_DIR}/Bsp/stm32f4/usart Bsp_Src)
-    aux_source_directory(${CMAKE_SOURCE_DIR}/Bsp/stm32f4/systick Bsp_Src)
+    aux_source_directory(${CMAKE_SOURCE_DIR}/Bsp/stm32f4/led Bsp_Platform_Src)
+    aux_source_directory(${CMAKE_SOURCE_DIR}/Bsp/stm32f4/usart Bsp_Platform_Src)
+    aux_source_directory(${CMAKE_SOURCE_DIR}/Bsp/stm32f4/systick Bsp_Platform_Src)
 
-    # 为BSP库添加头文件包含路径 
+    # 为BSP库添加头文件包含路径
     target_include_directories(Bsp_Driver PRIVATE
         ${CMAKE_SOURCE_DIR}/Bsp/stm32f4/
 
@@ -38,15 +49,21 @@ if (PROJECT_PLATFORM STREQUAL "STM32F4")
         STM32F40_41xxx       # 指定芯片型号为 STM32F40x/41x 系列
         USE_STDPERIPH_DRIVER  # 启用标准外设库 (在库头文件中会检查此宏)
     )
-    
+
     # 设置系统时钟
     add_definitions(-DSYSCLK_MHZ=168)
 
 else()
 endif()
 
-# 将源文件添加到标准外设库目标
-target_sources(Bsp_Driver PRIVATE ${Bsp_Src})
+# 将平台源文件 + Bsp_Interface的对象文件一起打包进 Bsp_Driver
+# 最终只生成一个 libBsp_Driver.a，不存在跨库链接顺序问题
+target_sources(Bsp_Driver PRIVATE
+    ${Bsp_Platform_Src}
+    $<TARGET_OBJECTS:Bsp_Interface>
+)
 
-# 将接口库链接到标准外设库 (确保编译时能访问正确的头文件和宏定义)
-target_link_libraries(Bsp_Driver PUBLIC bsp_common_interface StdPeriph_Driver)
+# Bsp_Driver链接：
+# PUBLIC  Bsp_Interface：向下传播平台无关的接口头文件（include路径）
+# PRIVATE StdPeriph_Driver：平台驱动只在本target内使用，不向下传播
+target_link_libraries(Bsp_Driver PUBLIC Bsp_Interface PRIVATE StdPeriph_Driver)

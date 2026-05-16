@@ -18,7 +18,7 @@ if (PROJECT_PLATFORM STREQUAL "STM32F4")
     ${CMAKE_SOURCE_DIR}/Drivers/STM32F4_SPL/STM32F4xx_StdPeriph_Driver/src/misc.c          # 杂项驱动 (NVIC, SysTick等)
     ${CMAKE_SOURCE_DIR}/Drivers/STM32F4_SPL/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_rcc.c   # 复位和时钟控制驱动
     ${CMAKE_SOURCE_DIR}/Drivers/STM32F4_SPL/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_gpio.c  # GPIO驱动
-    ${CMAKE_SOURCE_DIR}/Drivers/STM32F4_SPL/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_usart.c  #UASRT驱动
+    ${CMAKE_SOURCE_DIR}/Drivers/STM32F4_SPL/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_usart.c  #USART驱动
     )
 
     # 创建接口库 (不生成实际库文件，仅管理头文件和宏定义)
