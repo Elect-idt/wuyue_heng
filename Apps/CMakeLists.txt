@@ -1,39 +1,51 @@
-# 设置 CMake 最低版本要求 (3.22)
+# =====================================================================
+# Apps — 应用层（FreeRTOS 任务实现）
+#
+# 产出：
+#   app_task_interface (INTERFACE) — Apps 头文件路径
+#   app_task_lib (STATIC) → libapp_task_lib.a
+#
+# Apps 层只依赖 Bsp_Driver 的接口（*_ops_t 函数指针）
+# 不直接调用 STM32 SPL 函数，实现平台无关
+# =====================================================================
 cmake_minimum_required(VERSION 3.22)
 
-# 定义App库的启动源文件
+# App 任务源文件
 set(App_Task_Src
-    ${CMAKE_SOURCE_DIR}/Apps/app_init.c
+    ${CMAKE_SOURCE_DIR}/Apps/app_init.c   # 应用初始化（创建 FreeRTOS 任务）
 )
-# Apps Drivers源文件
+# LED 状态任务
 aux_source_directory(${CMAKE_SOURCE_DIR}/Apps/led_status_app App_Task_Src)
 
-# 创建接口库 (不生成实际库文件，仅管理头文件和宏定义)
+# Apps 头文件路径（INTERFACE：传播给链接 app_task_lib 的 target）
 add_library(app_task_interface INTERFACE)
 
-# 为接口库添加头文件包含路径 (INTERFACE 表示这些路径会影响链接此库的目标)
 target_include_directories(app_task_interface INTERFACE
-    # apps文件
-    ${CMAKE_SOURCE_DIR}/Apps
-
-    # 各个app驱动头文件
-    ${CMAKE_SOURCE_DIR}/Apps/led_status_app
+    ${CMAKE_SOURCE_DIR}/Apps                     # app_init.h 等公共头文件
+    ${CMAKE_SOURCE_DIR}/Apps/led_status_app       # LED 任务头文件
 )
 
-# 为接口库添加全局宏定义 (这些宏会影响所有使用此外设驱动的代码)
-target_compile_definitions(app_task_interface INTERFACE
-    # STM32F40_41xxx       # 指定芯片型号为 STM32F40x/41x 系列
-    # USE_STDPERIPH_DRIVER  # 启用标准外设库 (在库头文件中会检查此宏)
-)
-
-# 创建实际的标准外设静态库 (将编译为 .a 文件)
 add_library(app_task_lib STATIC)
 
-# 将源文件添加到标准外设库目标
 target_sources(app_task_lib PRIVATE ${App_Task_Src})
 
-# 将接口库链接到标准外设库 (确保编译时能访问正确的头文件和宏定义)
+# =====================================================================
+# app_task_lib 的依赖
+#
+# PUBLIC Bsp_Driver:
+#   Apps 通过 g_board_hw_bsp_->led_ops->xxx() 访问硬件
+#   Bsp_Driver PUBLIC 传播 Bsp_Interface 的头文件路径（-IBsp/common -IBsp）
+#   Apps 能看到 *_interface.h，但看不到 stm32f4xx.h（StdPeriph_Driver 是 PRIVATE）
+#
+# PUBLIC FreeRTOS_Lib:
+#   Apps 使用 FreeRTOS API（xTaskCreate, vTaskDelay 等）
+#   FreeRTOS_Lib PUBLIC 传播 freertos_interface（-IFreeRTOS/inc 等）
+#
+# PUBLIC app_task_interface:
+#   传播 Apps 自身的头文件路径
+# =====================================================================
 target_link_libraries(app_task_lib PUBLIC
-    Bsp_Driver                      # 链接BSP驱动（CMake据此确定链接顺序）
-    FreeRTOS_Lib                    # 链接FreeRTOS库 (来自 FreeRTOS)
-    app_task_interface)
+    Bsp_Driver           # BSP 驱动（通过接口访问硬件）
+    FreeRTOS_Lib         # FreeRTOS 内核（任务调度）
+    app_task_interface   # Apps 头文件
+)

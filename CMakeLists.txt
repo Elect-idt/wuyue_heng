@@ -1,81 +1,95 @@
-# 设置 CMake 最低版本要求 (3.22)
+# =====================================================================
+# 根 CMakeLists.txt — 项目总入口
+# STM32F405RGT6, Cortex-M4F, FreeRTOS, 168MHz
+# CMake 3.22 + Ninja + ARM GCC 14.2 交叉编译
+# =====================================================================
 cmake_minimum_required(VERSION 3.22)
 
-# 配置 C 编译器标准设置
-set(CMAKE_C_STANDARD 11)          # 强制使用 C11 标准
-set(CMAKE_C_STANDARD_REQUIRED ON)  # 必须严格遵守 C11 标准
-set(CMAKE_C_EXTENSIONS ON)         # 启用编译器扩展功能
+# C 语言标准设置
+set(CMAKE_C_STANDARD 11)          # C11 标准
+set(CMAKE_C_STANDARD_REQUIRED ON)  # 必须严格遵守
+set(CMAKE_C_EXTENSIONS ON)         # 启用 GCC 扩展（如 __attribute__）
 
-# 定义构建类型 (Debug/Release)
+# 默认 Debug 构建（若未指定 -DCMAKE_BUILD_TYPE=Release）
 if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE "Debug")  # 若未指定构建类型，默认为 Debug 模式
+    set(CMAKE_BUILD_TYPE "Debug")
 endif()
 
-# 设置项目名称变量
-set(CMAKE_PROJECT_NAME wuyue_heng)  # 定义项目名称为 "wuyue_heng"
+# 项目名称
+set(CMAKE_PROJECT_NAME wuyue_heng)
 
-# 包含 ARM 交叉编译工具链配置
-include("cmake/target_config.cmake")  # 加载平台配置
-include("cmake/gcc-arm-none-eabi.cmake")  # 加载 ARM Cortex-M 的 GCC 工具链配置
+# =====================================================================
+# 工具链配置（必须在 project() 之前加载）
+# target_config.cmake:  定义 PROJECT_PLATFORM、芯片型号等变量
+# gcc-arm-none-eabi.cmake: 配置交叉编译器、链接脚本、编译选项
+# =====================================================================
+include("cmake/target_config.cmake")
+include("cmake/gcc-arm-none-eabi.cmake")
 
-# 设置平台相关宏
-if (PROJECT_PLATFORM STREQUAL "STM32F4")
-add_definitions(-DSTM32F4)
-else()
-endif()
+# 平台宏（已移到 bsp_common_interface，随平台选择自动生效）
+# 不再使用 add_definitions 全局污染
 
-# 生成编译命令数据库 (用于 IDE 索引)
-set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)  # 生成 compile_commands.json 文件
+# 生成 compile_commands.json（供 IDE 代码跳转和语法补全使用）
+set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
-# 正式声明项目
-project(${CMAKE_PROJECT_NAME})  # 初始化项目，使用前面定义的名称
-message("Build type: " ${CMAKE_BUILD_TYPE})  # 打印当前构建类型
+# 正式声明项目（必须在工具链配置之后）
+project(${CMAKE_PROJECT_NAME})
+message("Build type: " ${CMAKE_BUILD_TYPE})
 
-# -dD：输出所有宏定义 -Wp,-v：打印预处理器的详细搜索路径
-add_compile_options(-dD -Wp,-v)  
+# 诊断选项（调试 #include 路径或宏展开时取消注释）
+# -dD：预处理时输出所有宏定义
+# -Wp,-v：打印预处理器头文件搜索路径
+# add_compile_options(-dD -Wp,-v)
 
-# 启用 C 和汇编语言支持
-enable_language(C ASM)  # 告知 CMake 项目使用 C 和汇编语言
+# 启用 C 和汇编语言支持（启动文件 startup_stm32f40_41xxx.s 是汇编）
+enable_language(C ASM)
 
-# 创建可执行目标
-add_executable(${CMAKE_PROJECT_NAME})  # 生成名为 wuyue_heng 的可执行文件
+# =====================================================================
+# 创建最终可执行目标 wuyue_heng.elf
+# =====================================================================
+add_executable(${CMAKE_PROJECT_NAME})
 
-# 添加标准外设库子目录
-add_subdirectory(Drivers)  # 编译 Drivers 目录下的库 (标准外设库)
-add_subdirectory(Bsp)  # 编译 Bsp 目录下的库 (Bsp库)
-add_subdirectory(FreeRTOS)  # 编译 FreeRTOS 目录下的库 (FreeRTOS库)
-add_subdirectory(Apps)  # 编译 apps 目录下的库 (apps库)
+# 子目录（按依赖顺序添加，CMake 会自动处理链接顺序）
+add_subdirectory(Drivers)    # → StdPeriph_Driver (STM32 SPL 标准外设库)
+add_subdirectory(Bsp)        # → Bsp_Driver (BSP 驱动，依赖 StdPeriph_Driver)
+add_subdirectory(FreeRTOS)   # → FreeRTOS_Lib (FreeRTOS 内核)
+add_subdirectory(Apps)       # → app_task_lib (应用任务，依赖 Bsp_Driver + FreeRTOS)
 
-# 添加应用程序源文件
+# Core 层源文件（不属于任何子库，直接加入可执行文件）
+# stm32f4xx_it.c 已移到 Bsp/stm32f4/，属于平台相关代码
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/Core/src/main.c            # 主程序入口
-    ${CMAKE_SOURCE_DIR}/Core/src/stm32f4xx_it.c    # 中断服务程序
-    ${CMAKE_SOURCE_DIR}/Core/src/syscalls.c        # 系统调用重定向
-    ${CMAKE_SOURCE_DIR}/Core/src/sysmem.c          # 内存管理实现
-    
+    ${CMAKE_SOURCE_DIR}/Core/src/syscalls.c        # 系统调用重定向（printf → USART）
+    ${CMAKE_SOURCE_DIR}/Core/src/sysmem.c          # 堆内存管理
 )
 
-# 添加头文件包含路径
+# Core 头文件路径
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
-    ${CMAKE_SOURCE_DIR}/Core/inc  # 包含项目核心头文件目录
+    ${CMAKE_SOURCE_DIR}/Core/inc
 )
 
-# 添加预处理器宏定义
+# ============================================================
+# 注意：这里不能定义 STM32F40_41xxx 和 USE_STDPERIPH_DRIVER
+# 它们已经在 Drivers/CMakeLists.txt 的 periph_drivers_interface 中定义
+# Apps 层不应该看到 STM32 平台宏，这是依赖倒置的保证
+# ============================================================
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
-    # STM32F40_41xxx            # 指定使用的 STM32 系列型号
-    # USE_STDPERIPH_DRIVER      # 启用标准外设库
     $<$<CONFIG:Debug>:DEBUG>  # Debug 模式下自动定义 DEBUG 宏
 )
 
+# =====================================================================
 # 链接依赖库
+# 顺序：app_task_lib → Bsp_Driver → FreeRTOS_Lib
+# 实际链接顺序由 CMake 根据依赖图自动排列，这里只是声明依赖关系
+# =====================================================================
 target_link_libraries(${CMAKE_PROJECT_NAME}
-    Bsp_Driver                # 链接Bsp库 (来自 Bsp)
-    FreeRTOS_Lib                    # 链接FreeRTOS库 (来自 FreeRTOS)
-    app_task_lib                    # 链接apps库 (来自 apps)
+    Bsp_Driver          # BSP 驱动（包含 Bsp_Interface 的 .o + STM32 平台驱动）
+    FreeRTOS_Lib        # FreeRTOS 内核
+    app_task_lib        # 应用任务（LED 等任务实现）
 )
 
-# [修改点8] 设置构建后需清理的附加文件
-set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES 
-    ADDITIONAL_CLEAN_FILES 
-    "${CMAKE_PROJECT_NAME}.map;${CMAKE_PROJECT_NAME}.hex;${CMAKE_PROJECT_NAME}.bin"  # 清理生成的目标文件
+# 清理时额外删除生成的 .map .hex .bin 文件
+set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES
+    ADDITIONAL_CLEAN_FILES
+    "${CMAKE_PROJECT_NAME}.map;${CMAKE_PROJECT_NAME}.hex;${CMAKE_PROJECT_NAME}.bin"
 )

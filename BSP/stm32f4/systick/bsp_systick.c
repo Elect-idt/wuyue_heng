@@ -17,7 +17,6 @@
 
 static u8 fac_us = 0;  // us延时倍乘数
 static u16 fac_ms = 0; // ms延时倍乘数
-static u16 max_us = 0; // ms延时倍乘数
 
 /**
  * @brief  SysTick定时器初始化

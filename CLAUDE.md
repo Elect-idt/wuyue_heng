@@ -13,6 +13,7 @@ wuyue_heng/
 │   ├── common/                 平台无关接口（led/usart/systick/spi_ops_t）
 │   └── stm32f4/                STM32F4平台实现
 │       ├── stm32f4_bsp.c/h     聚合所有驱动实例 + platform_init(NVIC分组)
+│       ├── stm32f4xx_it.c/h    中断处理函数（从Core移入，属于平台相关代码）
 │       ├── led/ bsp_debug_led.c
 │       ├── usart/ bsp_usart.c
 │       ├── systick/ bsp_systick.c
@@ -20,43 +21,55 @@ wuyue_heng/
 ├── Drivers/                ← STM32 SPL标准外设库
 ├── FreeRTOS/               ← FreeRTOS内核
 ├── Apps/                   ← 应用层（LED任务等）
-├── Core/src/               ← main.c, stm32f4xx_it.c
+├── Core/src/               ← main.c, syscalls.c, sysmem.c（平台无关）
 └── doc/
     └── bsp-architecture-summary.md  ← 架构详细文档
 ```
 
 ## CMake target 架构（关键！）
 ```
-bsp_common_interface (INTERFACE)  ← Bsp/common/ + Bsp/ 头文件路径
+bsp_common_interface (INTERFACE)  ← 头文件路径 + STM32F4/SYSCLK_MHZ 宏
         ↑
 Bsp_Interface (OBJECT)           ← 编译 bsp_interface.c，只链接 bsp_common_interface
-        ↑ $<TARGET_OBJECTS:...>     编译隔离：看不到STM32头文件
+        ↑ $<TARGET_OBJECTS:...>     编译隔离：看不到SPL头文件
 Bsp_Driver (STATIC)              ← 包含 Bsp_Interface .obj + stm32f4/*.c
         ↑                            PUBLIC Bsp_Interface, PRIVATE StdPeriph_Driver
 app_task_lib (STATIC)            ← 链接 Bsp_Driver，看不到STM32头文件
 ```
 
 ### 为什么 Bsp_Interface 是 OBJECT（不是 STATIC）
-- bsp_interface.c 和 stm32f4_bsp.c 存在循环符号依赖：
-  - bsp_interface.c 引用 g_stm32f4_bsp_（extern）
-  - stm32f4_bsp.c 定义 g_stm32f4_bsp_，同时使用 board_hw_bsp_t 类型
-- 如果用 STATIC：两个 .o 分属不同 .a，链接器单遍扫描会导致链接顺序报错
-- OBJECT 把两个 .o 放进同一个 libBsp_Driver.a，同一个 .a 内链接器反复扫描直到收敛
+- bsp_interface.c 和 stm32f4_bsp.c 存在循环符号依赖
+- OBJECT 把两个 .o 放进同一个 libBsp_Driver.a，链接器自动收敛
 - $<TARGET_OBJECTS:> 拿来 .o 文件，target_link_libraries 传播头文件路径，两者缺一不可
 
-### OBJECT 库的 PUBLIC 只传播头文件路径
-- STATIC + PUBLIC → 传播头文件路径 + -lxxx
-- OBJECT + PUBLIC → 只传播头文件路径（没有 .a 可以传播）
-- 因此最终链接命令里只有 -lBsp_Driver，不会出现 -lBsp_Interface
+### 编译隔离保证
+- Bsp_Interface 只链接 bsp_common_interface → 看不到 stm32f4xx.h
+- Bsp_Driver PRIVATE StdPeriph_Driver → SPL头文件不传播给 Apps
+- FreeRTOS PRIVATE periph_drivers_interface → SPL头文件不传播给 Apps
+- Core/ 只剩 main.c + syscalls.c + sysmem.c → 无平台依赖
+- 项目中零个 add_definitions，全部用 target_compile_definitions 精确控制
 
 ## 设计模式
 - **依赖倒置**：Apps 和 Drivers 都依赖 Bsp_Interface，互不依赖
 - **抽象工厂**：board_hw_bsp_t 聚合所有 *_ops_t，平台切换只换一个描述符
 - **策略模式**：*_ops_t 函数指针表（= C++虚表），运行时多态
-- **依赖注入**：Bsp_Init() 中 g_board_hw_bsp_ = &g_stm32f4_bsp_
+- **依赖注入**：不自己创建依赖，由外部提供。项目中嵌套三层：
+  - 第1层：具体函数注入到 *_ops_t（如 stm32f4_led_on → g_stm32f4_led_driver_）
+  - 第2层：驱动实例注入到 board_hw_bsp_t（如 &g_stm32f4_led_driver_ → g_stm32f4_bsp_）
+  - 第3层：平台描述符注入到全局指针（&g_stm32f4_bsp_ → g_board_hw_bsp_）
+
+## 分层依赖规则
+- 依赖方向单向向下：Apps → Bsp_Interface → StdPeriph_Driver
+- Bsp_Driver **不依赖** FreeRTOS（底层不应知道上层 RTOS）
+- 如果 BSP 驱动需要同步机制（如 USART 加锁），通过函数指针从 Apps 层注入：
+  ```c
+  typedef struct { void (*lock)(void); void (*unlock)(void); } xxx_lock_t;
+  ```
+  BSP 只调 lock()/unlock() 函数指针，不知道背后是 FreeRTOS 还是裸机关中断
+- 芯片可能会换（依赖倒置的价值），RTOS 大概率不换（但仍保持解耦以防万一）
 
 ## 编码约定
-- BSP/common/ 和 bsp_interface.c 是平台无关的，禁止引入平台头文件
+- BSP/common/ 和 bsp_interface.c 是平台无关的，禁止引入平台头文件（CMake编译隔离强制保证）
 - 外设驱动接口定义在 Bsp/common/*_interface.h，实现在 Bsp/stm32f4/*/
 - g_board_hw_bsp_ 是全局单例，Apps 通过它访问所有硬件
 - GPIO/USART/SYSTICK 已完成，SPI 驱动未完成
@@ -65,3 +78,4 @@ app_task_lib (STATIC)            ← 链接 Bsp_Driver，看不到STM32头文件
 ## 详细知识文档
 - `.claude/cmake-linking-knowledge.md` — 链接器行为、编译vs链接详解
 - `doc/bsp-architecture-summary.md` — BSP架构设计详解
+- `doc/cpp-vs-c-oop-pattern.md` — C实现C++面向对象模式对照（vtable、抽象工厂、虚函数）

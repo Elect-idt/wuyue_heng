@@ -1,32 +1,43 @@
-# 设置 CMake 最低版本要求 (3.22)
+# =====================================================================
+# FreeRTOS — 实时操作系统内核
+#
+# 产出：
+#   freertos_interface (INTERFACE) — FreeRTOS 头文件路径
+#   FreeRTOS_Lib (STATIC) → libFreeRTOS_Lib.a
+#
+# FreeRTOS kernel + heap_4 内存管理 + ARM Cortex-M4F 移植层
+# =====================================================================
 cmake_minimum_required(VERSION 3.22)
 
-# # 定义FreeRTOS库的内存管理文件
+# FreeRTOS 源文件
 set(FreeRTOS_Src
-    ${CMAKE_SOURCE_DIR}/FreeRTOS/port/MemMang/heap_4.c
+    ${CMAKE_SOURCE_DIR}/FreeRTOS/port/MemMang/heap_4.c   # 内存管理（支持 pvPortMalloc/vPortFree）
 )
-# FreeRTOS src源文件
+# FreeRTOS 内核源文件（tasks.c, queue.c, list.c 等）
 aux_source_directory(${CMAKE_SOURCE_DIR}/FreeRTOS/src FreeRTOS_Src)
-# FreeRTOS Component源文件
+# ARM Cortex-M4F 移植层（上下文切换、中断处理）
 aux_source_directory(${CMAKE_SOURCE_DIR}/FreeRTOS/port/RVDS/ARM_CM4F FreeRTOS_Src)
 
-# 创建接口库 (不生成实际库文件，仅管理头文件和宏定义)
+# FreeRTOS 头文件路径（INTERFACE：传播给链接 FreeRTOS_Lib 的 target）
 add_library(freertos_interface INTERFACE)
 
-# 为接口库添加头文件包含路径 (INTERFACE 表示这些路径会影响链接此库的目标)
 target_include_directories(freertos_interface INTERFACE
-    # FreeRTOS头文件目录
-    ${CMAKE_SOURCE_DIR}/FreeRTOS/inc
-    
-    # FreeRTOS port头文件
-    ${CMAKE_SOURCE_DIR}/FreeRTOS/port/RVDS/ARM_CM4F
+    ${CMAKE_SOURCE_DIR}/FreeRTOS/inc                    # FreeRTOS API 头文件（FreeRTOS.h, task.h 等）
+    ${CMAKE_SOURCE_DIR}/FreeRTOS/port/RVDS/ARM_CM4F     # 移植层头文件（portmacro.h）
 )
 
-# 创建实际的标准外设静态库 (将编译为 .a 文件)
 add_library(FreeRTOS_Lib STATIC)
 
-# 将源文件添加到标准外设库目标
 target_sources(FreeRTOS_Lib PRIVATE ${FreeRTOS_Src})
 
-# 将接口库链接到标准外设库 (确保编译时能访问正确的头文件和宏定义)
-target_link_libraries(FreeRTOS_Lib PUBLIC freertos_interface periph_drivers_interface bsp_common_interface)
+# =====================================================================
+# FreeRTOS_Lib 的依赖
+#
+# PUBLIC freertos_interface:  FreeRTOS API 头文件传播给 Apps 层
+#   → Apps 可以 #include "FreeRTOS.h", #include "task.h"
+#
+# PRIVATE periph_drivers_interface:
+#   FreeRTOS 移植层需要 CMSIS 核心头文件（core_cm4.h）访问 Cortex-M4 寄存器
+#   PRIVATE 防止 SPL 头文件泄露给 Apps 层
+# =====================================================================
+target_link_libraries(FreeRTOS_Lib PUBLIC freertos_interface PRIVATE periph_drivers_interface)
