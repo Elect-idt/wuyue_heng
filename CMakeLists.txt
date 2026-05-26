@@ -53,6 +53,7 @@ add_executable(${CMAKE_PROJECT_NAME})
 add_subdirectory(Drivers)    # → StdPeriph_Driver (STM32 SPL 标准外设库)
 add_subdirectory(Bsp)        # → Bsp_Driver (BSP 驱动，依赖 StdPeriph_Driver)
 add_subdirectory(FreeRTOS)   # → FreeRTOS_Lib (FreeRTOS 内核)
+add_subdirectory(Component)  # → component_lib (器件协议层，依赖 Bsp_Interface)
 add_subdirectory(Apps)       # → app_task_lib (应用任务，依赖 Bsp_Driver + FreeRTOS)
 
 # Core 层源文件（不属于任何子库，直接加入可执行文件）
@@ -61,6 +62,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/Core/src/main.c            # 主程序入口
     ${CMAKE_SOURCE_DIR}/Core/src/syscalls.c        # 系统调用重定向（printf → USART）
     ${CMAKE_SOURCE_DIR}/Core/src/sysmem.c          # 堆内存管理
+    $<TARGET_OBJECTS:Bsp_ISR>                      # ISR handlers（直接链接，覆盖启动文件弱符号）
 )
 
 # Core 头文件路径
@@ -85,6 +87,7 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
 target_link_libraries(${CMAKE_PROJECT_NAME}
     Bsp_Driver          # BSP 驱动（包含 Bsp_Interface 的 .o + STM32 平台驱动）
     FreeRTOS_Lib        # FreeRTOS 内核
+    component_lib       # 器件协议层（74HC165 等）
     app_task_lib        # 应用任务（LED 等任务实现）
 )
 

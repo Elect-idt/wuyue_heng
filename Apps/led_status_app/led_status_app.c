@@ -2,9 +2,8 @@
  ******************************************************************************
  * @file    led_status_app.c
  * @author  Pan
- * @version V1.0
- * @date    2025-09-14
- * @brief   led_status_app
+ * @version V2.0
+ * @brief   led_status_app（使用 Component LED）
  ******************************************************************************
  * @attention
  *
@@ -14,18 +13,14 @@
  */
 
 #include "led_status_app.h"
+#include "led.h"
 #include <stdint.h>
 
-/***********************************
- *定义全局变量和函数
- ***********************************/
-// TaskHandle_t Led_Status_Task_Handle = NULL; /* led状态任务句柄 */
+static led_t s_status_led;
 
 /**
  * @brief  LED状态任务
- * @note   1s闪烁代表系统正常运行
- * @param  无
- * @retval 无
+ * @note   300ms闪烁代表系统正常运行
  */
 void Led_Status_Task(void* param)
 {
@@ -33,25 +28,12 @@ void Led_Status_Task(void* param)
     static portTickType PreviousWakeTime;
     PreviousWakeTime = xTaskGetTickCount();
 
-    // 遵循RAII，初始化led
-    configASSERT(BSP_STAT_TRUE == g_board_hw_bsp_->led_ops->init());
+    /* RAII: 初始化 LED（低有效） */
+    led_init(&s_status_led, g_board_hw_bsp_->gpio_ops, GPIO_PIN_LED_STATUS, true);
 
     while (1)
     {
-        /* 1. 绝对延时，一秒调用一次 */
-        printf("led control :%d\n", LED_TOGGLE);
-        g_board_hw_bsp_->usart_ops->usart_send_byte(USART_ID_DEBUG, 'a');
-        putchar('\n');
-        g_board_hw_bsp_->usart_ops->usart_send_string(USART_ID_DEBUG, "panjiale");
-        putchar('\n');
-        uint16_t hex = 0X4241;
-        g_board_hw_bsp_->usart_ops->usart_send_hex(USART_ID_DEBUG, hex);
-        putchar('\n');
-        uint8_t str[5] = {'a', 'b', 'c', 'd', '\0'};
-        g_board_hw_bsp_->usart_ops->usart_send_array(USART_ID_DEBUG, str, 5);
-        putchar('\n');
-
         vTaskDelayUntil(&PreviousWakeTime, 300);
-        configASSERT(BSP_STAT_TRUE == g_board_hw_bsp_->led_ops->control(LED_ID_STATUS, LED_TOGGLE));
+        led_toggle(&s_status_led);
     }
 }

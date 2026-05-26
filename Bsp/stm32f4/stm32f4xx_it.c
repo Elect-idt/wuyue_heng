@@ -22,6 +22,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_it.h"
+#include "bsp_spi.h"
 
 /** @addtogroup Template_Project
  * @{
@@ -155,6 +156,28 @@ void DebugMon_Handler(void) {}
 /*void PPP_IRQHandler(void)
 {
 }*/
+
+/******************************************************************************/
+/*                 SPI DMA Interrupt Handlers                                 */
+/******************************************************************************/
+
+/**
+ * @brief  SPI RX DMA传输完成中断处理
+ * @note   DMA1_Stream3，用于SPI2接收DMA完成通知
+ */
+void KEY_SCAN_SPI_RX_DMA_IRQHandler(void)
+{
+    if (DMA_GetITStatus(KEY_SCAN_SPI_RX_DMA_STREAM, KEY_SCAN_SPI_RX_DMA_IT_TC))
+    {
+        DMA_ClearITPendingBit(KEY_SCAN_SPI_RX_DMA_STREAM, KEY_SCAN_SPI_RX_DMA_IT_TC);
+        g_spi_dma_isr_count++; /* DEBUG */
+        /* 通知上层传输完成 */
+        if (g_spi_dma_sync_ptr && g_spi_dma_sync_ptr->notify_from_isr)
+        {
+            g_spi_dma_sync_ptr->notify_from_isr(g_spi_dma_sync_ptr->handle);
+        }
+    }
+}
 
 /**
  * @}

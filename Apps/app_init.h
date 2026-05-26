@@ -9,6 +9,7 @@
 
 /* 任务头文件 */
 #include "led_status_app.h"
+#include "key_scan_app.h"
 
 #define APP_TASK_SUCCESS 0
 #define APP_TASK_FAIL -1

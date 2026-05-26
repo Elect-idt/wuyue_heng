@@ -5,7 +5,7 @@
 
 // 公共接口
 #include "bsp_common_def.h"
-#include "bsp_led_interface.h"
+#include "bsp_gpio_interface.h"
 #include "bsp_usart_interface.h"
 #include "bsp_systick_interface.h"
 #include "bsp_spi_interface.h"
@@ -30,7 +30,7 @@
 typedef struct
 {
     bsp_status_e (*platform_init)(void); // 平台级初始化（中断分组等全局配置）
-    const led_ops_t *led_ops; // 指向LED操作方法的指针
+    const gpio_ops_t *gpio_ops; // 指向GPIO操作方法的指针
     const usart_ops_t *usart_ops; // 指向USART操作方法的指针
     const systick_ops_t *systick_ops; // 指向SYSTICK操作方法的指针
     const spi_ops_t *spi_ops; // 指向SPI操作方法的指针

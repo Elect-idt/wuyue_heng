@@ -16,6 +16,8 @@ set(App_Task_Src
 )
 # LED 状态任务
 aux_source_directory(${CMAKE_SOURCE_DIR}/Apps/led_status_app App_Task_Src)
+# 按键扫描任务
+aux_source_directory(${CMAKE_SOURCE_DIR}/Apps/key_scan_app App_Task_Src)
 
 # Apps 头文件路径（INTERFACE：传播给链接 app_task_lib 的 target）
 add_library(app_task_interface INTERFACE)
@@ -23,6 +25,7 @@ add_library(app_task_interface INTERFACE)
 target_include_directories(app_task_interface INTERFACE
     ${CMAKE_SOURCE_DIR}/Apps                     # app_init.h 等公共头文件
     ${CMAKE_SOURCE_DIR}/Apps/led_status_app       # LED 任务头文件
+    ${CMAKE_SOURCE_DIR}/Apps/key_scan_app         # 按键扫描任务头文件
 )
 
 add_library(app_task_lib STATIC)
@@ -47,5 +50,6 @@ target_sources(app_task_lib PRIVATE ${App_Task_Src})
 target_link_libraries(app_task_lib PUBLIC
     Bsp_Driver           # BSP 驱动（通过接口访问硬件）
     FreeRTOS_Lib         # FreeRTOS 内核（任务调度）
+    component_lib        # 器件协议层（74HC165 等）
     app_task_interface   # Apps 头文件
 )

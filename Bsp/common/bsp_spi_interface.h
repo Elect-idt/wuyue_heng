@@ -14,6 +14,14 @@ typedef enum
     SPI_ID_MAX        = 1,    // MAX
 } spi_id_e;
 
+// DMA同步机制（BSP层不依赖RTOS，通过函数指针注入同步原语）
+typedef struct
+{
+    void *handle;                          // 同步句柄（如SemaphoreHandle_t，对BSP透明）
+    void (*wait)(void *handle);            // 阻塞等待（如xSemaphoreTake）
+    void (*notify_from_isr)(void *handle); // ISR中通知（如xSemaphoreGiveFromISR）
+} spi_dma_sync_t;
+
 // 定义SPI的逻辑ID
 typedef enum
 {
@@ -41,10 +49,10 @@ typedef struct
     bsp_status_e (*spi_receive_byte)(spi_id_e id, uint8_t* receive_data);
 
     // SPI 只发多个字节, 默认用DMA
-    bsp_status_e (*spi_send_multi_data_dma)(spi_id_e id, const uint8_t* send_data, uint32_t data_size);
+    bsp_status_e (*spi_send_multi_data_dma)(spi_id_e id, const uint8_t* send_data, uint32_t data_size, const spi_dma_sync_t *sync);
 
     // SPI 只读多个字节, 默认用DMA
-    bsp_status_e (*spi_receive_multi_data_dma)(spi_id_e id, uint8_t* const receive_data, uint32_t data_size);
+    bsp_status_e (*spi_receive_multi_data_dma)(spi_id_e id, uint8_t* receive_data, uint32_t data_size, const spi_dma_sync_t *sync);
 
 } spi_ops_t;
 

@@ -8,27 +8,30 @@
 |------|---------------|
 | **依赖倒置（DIP）** | Apps 和 Drivers 都依赖 `Bsp_Interface`（抽象层），互不依赖 |
 | **抽象工厂** | `board_hw_bsp_t` 聚合所有外设接口，平台切换只换一个描述符实例 |
-| **策略模式** | `led_ops_t` 等函数指针表，运行时可替换具体实现 |
+| **策略模式** | `gpio_ops_t` 等函数指针表，运行时可替换具体实现 |
 | **依赖注入** | `Bsp_Init()` 中 `g_board_hw_bsp_ = &g_stm32f4_bsp_`，将具体工厂注入抽象指针 |
 
 ### 依赖方向图
 
 ```
-        Apps (高层)                  Drivers/STM32F4 (低层)
-        应用业务逻辑                  硬件具体实现
-            │                              │
-            │    都指向抽象，不互相指向       │
-            └──────────┬───────────────────┘
-                       │
-                       ▼
-              Bsp_Interface (抽象层)
-              board_hw_bsp_t / *_ops_t
-              函数指针结构体 = "虚表"
+  Apps (高层)                   Drivers/STM32F4 (低层)
+  应用业务逻辑                   硬件具体实现
+      │                              │
+      │     都指向抽象，不互相指向      │
+      └──────────┬───────────────────┘
+                 │
+          Component (器件协议层)
+          LED / 74HC165 / ...
+                 │
+                 ▼
+        Bsp_Interface (抽象层)
+        board_hw_bsp_t / *_ops_t
+        函数指针结构体 = "虚表"
 ```
 
 ### 业界对照：Linux 内核
 
-Linux 内核的 `file_operations` 与本项目 `led_ops_t` 是同一模式：
+Linux 内核的 `file_operations` 与本项目 `gpio_ops_t` 是同一模式：
 
 ```c
 // Linux 内核 - 文件操作"虚表"
@@ -43,7 +46,7 @@ const struct file_operations ext4_fops = { .read = ext4_read, ... };
 const struct file_operations fat_fops  = { .read = fat_read, ... };
 ```
 
-本项目的 `led_ops_t` 和内核的 `file_operations` 本质相同——都是函数指针表实现多态。
+本项目的 `gpio_ops_t` 和内核的 `file_operations` 本质相同——都是函数指针表实现多态。
 
 ### 架构优点
 
@@ -62,54 +65,54 @@ const struct file_operations fat_fops  = { .read = fat_read, ... };
 
 ### 函数指针表 = 虚表
 
-项目中的 `led_ops_t` 就是一张虚表：
+项目中的 `gpio_ops_t` 就是一张虚表：
 
 ```c
 typedef struct {
     const char* name;
-    bsp_status_e (*init)(void);           // 槽位0
-    bsp_status_e (*control)(led_id_e, led_state_e);  // 槽位1
-} led_ops_t;
+    bsp_status_e (*init)(gpio_pin_e pin);                  // 槽位0
+    bsp_status_e (*write)(gpio_pin_e pin, gpio_state_e);   // 槽位1
+} gpio_ops_t;
 ```
 
 不同平台填入不同地址：
 
 ```c
 // STM32 平台的虚表
-const led_ops_t g_stm32f4_led_driver_ = {
-    .name    = "STM32F4_LED_DRIVER",
-    .init    = stm32f4_led_init,
-    .control = stm32f4_led_control,
+const gpio_ops_t g_stm32f4_gpio_driver_ = {
+    .name  = "STM32F4_GPIO_DRIVER",
+    .init  = stm32f4_gpio_init,
+    .write = stm32f4_gpio_write,
 };
 
 // 未来 GD32 平台的虚表
-const led_ops_t g_gd32f1_led_driver_ = {
-    .name    = "GD32F1_LED_DRIVER",
-    .init    = gd32f1_led_init,
-    .control = gd32f1_led_control,
+const gpio_ops_t g_gd32f1_gpio_driver_ = {
+    .name  = "GD32F1_GPIO_DRIVER",
+    .init  = gd32f1_gpio_init,
+    .write = gd32f1_gpio_write,
 };
 ```
 
 调用方代码**完全不变**：
 
 ```c
-g_board_hw_bsp_->led_ops->control(id, state);
-// STM32: 查表 → stm32f4_led_control
-// GD32:  查表 → gd32f1_led_control
+g_board_hw_bsp_->gpio_ops->write(pin, state);
+// STM32: 查表 → stm32f4_gpio_write
+// GD32:  查表 → gd32f1_gpio_write
 // 同一行代码，不同行为——多态
 ```
 
 ### 调用跳转过程
 
-以 `g_board_hw_bsp_->led_ops->control(LED_ID_STATUS, LED_TOGGLE)` 为例：
+以 `g_board_hw_bsp_->gpio_ops->write(GPIO_PIN_LED_STATUS, GPIO_TOGGLE)` 为例：
 
 **编译期**：编译器只看到类型定义，不知道具体实现在哪，生成间接调用指令：
 
 ```asm
 LDR  R0, =g_board_hw_bsp_     ; 加载全局指针变量的地址
 LDR  R0, [R0]                 ; 解引用 → 得到 g_stm32f4_bsp_ 的地址
-LDR  R1, [R0, #led_ops偏移]    ; 得到 g_stm32f4_led_driver_ 的地址
-LDR  R2, [R1, #control偏移]    ; 得到 stm32f4_led_control 的函数地址
+LDR  R1, [R0, #gpio_ops偏移]    ; 得到 g_stm32f4_gpio_driver_ 的地址
+LDR  R2, [R1, #write偏移]       ; 得到 stm32f4_gpio_write 的函数地址
 BLX  R2                       ; 间接跳转！调用函数指针
 ```
 
@@ -118,9 +121,9 @@ BLX  R2                       ; 间接跳转！调用函数指针
 **运行时**：`Bsp_Init()` 把 `&g_stm32f4_bsp_` 赋给 `g_board_hw_bsp_`（依赖注入），之后每次调用通过三级指针解引用跳转：
 
 ```
-g_board_hw_bsp_ → g_stm32f4_bsp_       （选平台）
-  →.led_ops     → g_stm32f4_led_driver_ （选外设驱动）
-    →.control   → stm32f4_led_control() （选具体函数，BLX跳转）
+g_board_hw_bsp_ → g_stm32f4_bsp_        （选平台）
+  →.gpio_ops    → g_stm32f4_gpio_driver_ （选外设驱动）
+    →.write     → stm32f4_gpio_write()   （选具体函数，BLX跳转）
 ```
 
 ### 与 C++ 的对应关系
@@ -129,12 +132,12 @@ C 的函数指针表等价于 C++ 的虚函数：
 
 ```cpp
 // C++ 写法
-class LedOps {
+class GpioOps {
 public:
-    virtual bsp_status_e init() = 0;          // 虚函数 = 函数指针
-    virtual bsp_status_e control(led_id_e, led_state_e) = 0;
+    virtual bsp_status_e init(gpio_pin_e pin) = 0;          // 虚函数 = 函数指针
+    virtual bsp_status_e write(gpio_pin_e pin, gpio_state_e) = 0;
 };
-// C++ 编译器自动生成 vtable（和手写的 led_ops_t 一样的东西）
+// C++ 编译器自动生成 vtable（和手写的 gpio_ops_t 一样的东西）
 ```
 
 ---
@@ -158,7 +161,10 @@ bsp_common_interface (INTERFACE)    ← 纯头文件路径，无源文件
   Bsp_Driver (STATIC)              ← 包含 Bsp_Interface 的 .obj + 平台驱动 .obj
   (stm32f4/*.c)                       PRIVATE StdPeriph_Driver
         ↑
-  app_task_lib (STATIC)            ← 链接 Bsp_Driver
+  component_lib (STATIC)           ← 器件协议层，PUBLIC Bsp_Driver
+  (Component/*.c)                     不依赖 FreeRTOS
+        ↑
+  app_task_lib (STATIC)            ← 链接 Bsp_Driver + component_lib + FreeRTOS_Lib
   (Apps/*.c)                          看不到 STM32 头文件（StdPeriph_Driver 是 PRIVATE）
 ```
 
@@ -208,6 +214,16 @@ target_link_libraries(Bsp_Driver PUBLIC Bsp_Interface PRIVATE StdPeriph_Driver)
 ---
 
 ## 四、其他改动记录
+
+### LED BSP → GPIO BSP 重构
+
+原 `Bsp/stm32f4/led/` (bsp_debug_led.c) 是 LED 专用驱动。重构为 `Bsp/stm32f4/gpio/` (bsp_gpio.c) 通用 GPIO 驱动：
+
+- `led_ops_t` → `gpio_ops_t`：接口从 LED 语义（on/off/toggle）改为 GPIO 语义（high/low/toggle）
+- `led_id_e` → `gpio_pin_e`：引脚 ID 不再绑定 LED 概念，HC165 PL 等非 LED 引脚也使用同一接口
+- `init(void)` → `init(gpio_pin_e pin)`：按引脚单独初始化，避免重复配置
+- 每个引脚有独立完整的 GPIO 配置（mode/speed/otype/pupd），支持不同引脚需求（如 I2C SDA 开漏输出）
+- LED 语义（active_low 映射）提升为 Component 层
 
 ### NVIC_PriorityGroupConfig 位置调整
 

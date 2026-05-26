@@ -30,6 +30,8 @@ if (PROJECT_PLATFORM STREQUAL "STM32F4")
         ${CMAKE_SOURCE_DIR}/Drivers/STM32F4_SPL/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_rcc.c   # 时钟控制
         ${CMAKE_SOURCE_DIR}/Drivers/STM32F4_SPL/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_gpio.c  # GPIO
         ${CMAKE_SOURCE_DIR}/Drivers/STM32F4_SPL/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_usart.c # USART
+        ${CMAKE_SOURCE_DIR}/Drivers/STM32F4_SPL/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_spi.c   # SPI
+        ${CMAKE_SOURCE_DIR}/Drivers/STM32F4_SPL/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_dma.c   # DMA
     )
 
     # =====================================================================

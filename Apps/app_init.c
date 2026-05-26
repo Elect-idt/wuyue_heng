@@ -33,13 +33,17 @@ int32_t AppTaskCreate(void)
 
     taskENTER_CRITICAL(); // 进入临界区;
 
-    /* ①创建LCD显示任务 */
-    xReturn = xTaskCreate((TaskFunction_t)Led_Status_Task, /* 任务入口函数 */
-                          (const char*)"Led_Status_Task",  /* 任务名字 */
-                          (uint16_t)256,                   /* 任务栈大小 */
-                          (void*)NULL,          /* 任务入口函数参数 */
-                          (UBaseType_t)2,       /* 任务的优先级 */
-                          (TaskHandle_t*)NULL); /* 任务控制块指针 */
+    /* ①创建按键扫描任务（高优先级，10ms周期） */
+    xReturn = xTaskCreate((TaskFunction_t)Key_Scan_Task, (const char*)"Key_Scan_Task", (uint16_t)256, (void*)NULL,
+                          (UBaseType_t)4, (TaskHandle_t*)NULL);
+    if (pdPASS != xReturn)
+    {
+        status = APP_TASK_FAIL;
+    }
+
+    /* ②创建LED状态任务 */
+    xReturn = xTaskCreate((TaskFunction_t)Led_Status_Task, (const char*)"Led_Status_Task", (uint16_t)256, (void*)NULL,
+                          (UBaseType_t)2, (TaskHandle_t*)NULL);
     if (pdPASS != xReturn)
     {
         status = APP_TASK_FAIL;
