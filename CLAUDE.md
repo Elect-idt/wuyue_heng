@@ -10,13 +10,14 @@ wuyue_heng/
 ├── Bsp/                    ← BSP层（依赖倒置架构核心）
 │   ├── CMakeLists.txt
 │   ├── bsp_interface.c/h       平台调度 + Bsp_Init()
-│   ├── common/                 平台无关接口（gpio/usart/systick/spi_ops_t）
+│   ├── common/                 平台无关接口（gpio/usart/spi_ops_t，SysTick已移除）
 │   └── stm32f4/                STM32F4平台实现
 │       ├── stm32f4_bsp.c/h     聚合所有驱动实例 + platform_init(NVIC分组)
-│       ├── stm32f4xx_it.c/h    中断处理函数
+│       ├── isr/                 ISR独立目录（OBJECT库Bsp_ISR，编译完全隔离）
+│       │   └── stm32f4xx_it.c/h  中断路由（硬件逻辑封装在各驱动中）
 │       ├── gpio/ bsp_gpio.c    GPIO驱动（LED、74HC165 PL等引脚）
 │       ├── usart/ bsp_usart.c
-│       ├── systick/ bsp_systick.c
+│       ├── systick/ bsp_systick.c [DEPRECATED] ← FreeRTOS独占SysTick，保留待TIM替代
 │       └── spi/ bsp_spi.c      SPI驱动（DMA + sync注入）
 ├── Component/              ← 器件协议抽象层（RTOS无关）
 │   ├── led/                   LED器件（基于gpio_ops_t，active_low映射）
@@ -60,10 +61,11 @@ app_task_lib (STATIC)            ← 链接 Bsp_Driver + component_lib + FreeRTO
 ## 三层架构
 
 ### BSP层 — 平台硬件抽象
-- `gpio_ops_t` / `usart_ops_t` / `systick_ops_t` / `spi_ops_t` — 纯硬件操作
+- `gpio_ops_t` / `usart_ops_t` / `spi_ops_t` — 纯硬件操作（SysTick 已从公共接口移除，由 FreeRTOS 独占）
 - `board_hw_bsp_t` 聚合所有 ops_t，全局单例 `g_board_hw_bsp_`
 - `gpio_ops_t.init(pin)` 按引脚ID单独初始化，每个引脚有独立完整配置（mode/speed/otype/pupd）
 - SPI DMA 同步通过 `spi_dma_sync_t` 函数指针注入，BSP 不知道 FreeRTOS
+- `spi_dma_sync_t.wait` 带 `timeout_ms` 参数和 `bool` 返回值，防止 DMA 异常时永久阻塞
 
 ### Component层 — 器件协议（RTOS无关）
 - 介于 Apps 和 Bsp_Interface 之间，组合多个 BSP 接口实现器件协议
@@ -97,8 +99,12 @@ app_task_lib (STATIC)            ← 链接 Bsp_Driver + component_lib + FreeRTO
 - 外设驱动接口定义在 Bsp/common/*_interface.h，实现在 Bsp/stm32f4/*/
 - 器件协议定义在 Component/*/\*.h，组合 BSP 接口实现器件级操作
 - g_board_hw_bsp_ 是全局单例，Apps 通过它访问所有硬件
-- GPIO/USART/SYSTICK/SPI 已完成
+- GPIO/USART/SPI 已完成，SysTick 已从公共接口移除（FreeRTOS 独占）
 - NVIC_PriorityGroupConfig 在 stm32f4_platform_init() 中调用（Bsp_Init 最先调用）
+- stm32f4xx_it.c 在 `Bsp/stm32f4/isr/` 独立目录，OBJECT 库 Bsp_ISR，只依赖 StdPeriph_Driver
+- ISR handler 硬件逻辑封装在各自驱动中（如 `bsp_spi_dma_isr_handler`），ISR 文件只做路由
+- `_write()`（printf 重定向）在 `Core/src/syscalls.c` 中，通过 `usart_ops_t` 抽象发送，不在 BSP 驱动文件中
+- `configCHECK_FOR_STACK_OVERFLOW` = 2，`vApplicationStackOverflowHook` 在 `app_init.c`
 
 ## 详细知识文档
 - `doc/bsp-architecture-summary.md` — BSP架构设计详解

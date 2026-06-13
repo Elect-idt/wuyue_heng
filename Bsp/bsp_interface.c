@@ -36,17 +36,20 @@ extern const board_hw_bsp_t g_stm32f4_bsp_;
  */
 bsp_status_e Bsp_Init(void)
 {
-    bsp_status_e status = BSP_STAT_TRUE;
+    bsp_status_e status;
+
     // 挂载当前平台的板级BSP描述符（依赖注入）
     g_board_hw_bsp_ = &BSP_DRIVER_INTERFACE;
 
     // 平台级全局配置（中断分组等），必须在所有外设初始化之前
-    status |= g_board_hw_bsp_->platform_init();
+    status = g_board_hw_bsp_->platform_init();
+    if (status != BSP_STAT_TRUE) return status;
 
     // 重要的外设在这里初始化，其他外设RAII
     // 调试串口初始化
-    status |= g_board_hw_bsp_->usart_ops->init(USART_ID_DEBUG);
-    status |= g_board_hw_bsp_->systick_ops->init(SYSTICK_ID_DEFAULT, SYSCLK_MHZ);
+    status = g_board_hw_bsp_->usart_ops->init(USART_ID_DEBUG);
+    if (status != BSP_STAT_TRUE) return status;
+    // SysTick 由 FreeRTOS 独占，不再在此初始化（FIX-05）
 
-    return status;
+    return BSP_STAT_TRUE;
 }

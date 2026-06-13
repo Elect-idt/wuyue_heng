@@ -21,7 +21,7 @@ static SPI_InitTypeDef stm32f4_spi_base_config[SPI_ID_MAX] = {0};
 /* DMA同步相关变量 */
 static uint8_t s_dummy_tx = 0xFF;    /* DMA接收时发送dummy字节产生时钟 */
 static uint8_t s_dummy_rx;           /* DMA发送时丢弃接收数据 */
-spi_dma_sync_t *g_spi_dma_sync_ptr = NULL; /* ISR访问的同步指针 */
+const spi_dma_sync_t *g_spi_dma_sync_ptr = NULL; /* ISR访问的同步指针 */
 volatile uint32_t g_spi_dma_isr_count = 0;  /* DEBUG: ISR触发计数 */
 
 /**
@@ -37,7 +37,7 @@ static void spi_gpio_config(spi_id_e id)
 
     switch (id)
     {
-    case SPI_ID_KEY_SACN:
+    case SPI_ID_KEY_SCAN:
     {
         /* KEY SCAN只需要读取不需要写入 */
         KEY_SCAN_SPI_GPIO_CLK_INIT(KEY_SCAN_SPI_SCK_GPIO_CLK | KEY_SCAN_SPI_MISO_GPIO_CLK | KEY_SCAN_SPI_MOSI_GPIO_CLK | KEY_SCAN_CS_GPIO_CLK,
@@ -86,7 +86,7 @@ static void spi_base_config(spi_id_e id)
 
     switch (id)
     {
-    case SPI_ID_KEY_SACN:
+    case SPI_ID_KEY_SCAN:
     {
         SPI_InitTypeDef SPI_InitStructure;
 
@@ -110,7 +110,7 @@ static void spi_base_config(spi_id_e id)
         /* 不在此处使能SPI DMA请求，使用DMA时才使能，避免空闲时误触发 */
 
         /* 保存配置 */
-        stm32f4_spi_base_config[SPI_ID_KEY_SACN] = SPI_InitStructure;
+        stm32f4_spi_base_config[SPI_ID_KEY_SCAN] = SPI_InitStructure;
     }
     break;
     default:
@@ -130,7 +130,7 @@ static void spi_dma_nvic_config(spi_id_e id)
 
     switch (id)
     {
-    case SPI_ID_KEY_SACN:
+    case SPI_ID_KEY_SCAN:
     {
         /* 配置DMA通道为中断源 */
         NVIC_InitStructure.NVIC_IRQChannel = KEY_SCAN_SPI_RX_DMA_IRQn;
@@ -180,7 +180,7 @@ static bsp_status_e stm32f4_spi_control(spi_id_e id, spi_control_e state)
 {
     switch (id)
     {
-    case SPI_ID_KEY_SACN:
+    case SPI_ID_KEY_SCAN:
     {
         if (SPI_STATE_ENABLE == state)
         {
@@ -210,18 +210,19 @@ static bsp_status_e stm32f4_spi_control(spi_id_e id, spi_control_e state)
  */
 static bsp_status_e spi_send_byte(spi_id_e id, uint8_t send_data)
 {
-    uint32_t stm32f4_timeout = SPI_TIME_OUT;
+    uint32_t stm32f4_timeout;
     switch (id)
     {
-    case SPI_ID_KEY_SACN:
+    case SPI_ID_KEY_SCAN:
     {
         /* 确保配置模式的准确性 */
-        if ((stm32f4_spi_base_config[SPI_ID_KEY_SACN].SPI_Direction & SPI_Direction_2Lines_FullDuplex) !=
+        if ((stm32f4_spi_base_config[SPI_ID_KEY_SCAN].SPI_Direction & SPI_Direction_2Lines_FullDuplex) !=
             SPI_Direction_2Lines_FullDuplex)
         {
             return BSP_STAT_INVALID_PARAMS;
         }
         /* 等待发送数据寄存器为空 */
+        stm32f4_timeout = SPI_TIME_OUT;
         while (SPI_GetFlagStatus(KEY_SCAN_SPI, SPI_FLAG_TXE) != SET)
         {
             if (stm32f4_timeout-- == 0)
@@ -232,6 +233,7 @@ static bsp_status_e spi_send_byte(spi_id_e id, uint8_t send_data)
         /* 写入数据寄存器，把要写入的数据写入发送缓冲区 */
         SPI_SendData(KEY_SCAN_SPI, send_data);
         /* 等待接收数据寄存器非空，并且假读取用于清空标志位 */
+        stm32f4_timeout = SPI_TIME_OUT;
         while (SPI_GetFlagStatus(KEY_SCAN_SPI, SPI_FLAG_RXNE) != SET)
         {
             if (stm32f4_timeout-- == 0)
@@ -269,7 +271,7 @@ static bsp_status_e spi_send_byte(spi_id_e id, uint8_t send_data)
  */
 static bsp_status_e spi_receive_byte(spi_id_e id, uint8_t* receive_data)
 {
-    uint32_t stm32f4_timeout = SPI_TIME_OUT;
+    uint32_t stm32f4_timeout;
     uint8_t dummy_send = 0XFF;
     if (receive_data == NULL)
     {
@@ -277,15 +279,16 @@ static bsp_status_e spi_receive_byte(spi_id_e id, uint8_t* receive_data)
     }
     switch (id)
     {
-    case SPI_ID_KEY_SACN:
+    case SPI_ID_KEY_SCAN:
     {
         /* 确保配置模式的准确性 */
-        if ((stm32f4_spi_base_config[SPI_ID_KEY_SACN].SPI_Direction & SPI_Direction_2Lines_FullDuplex) !=
+        if ((stm32f4_spi_base_config[SPI_ID_KEY_SCAN].SPI_Direction & SPI_Direction_2Lines_FullDuplex) !=
             SPI_Direction_2Lines_FullDuplex)
         {
             return BSP_STAT_INVALID_PARAMS;
         }
         /* 等待发送数据寄存器为空，并且假写用于启动时钟 */
+        stm32f4_timeout = SPI_TIME_OUT;
         while (SPI_GetFlagStatus(KEY_SCAN_SPI, SPI_FLAG_TXE) != SET)
         {
             if (stm32f4_timeout-- == 0)
@@ -296,6 +299,7 @@ static bsp_status_e spi_receive_byte(spi_id_e id, uint8_t* receive_data)
         /* 写入数据寄存器，把要写入的数据写入发送缓冲区 */
         SPI_SendData(KEY_SCAN_SPI, dummy_send);
         /* 等待接收数据寄存器非空 */
+        stm32f4_timeout = SPI_TIME_OUT;
         while (SPI_GetFlagStatus(KEY_SCAN_SPI, SPI_FLAG_RXNE) != SET)
         {
             if (stm32f4_timeout-- == 0)
@@ -337,8 +341,13 @@ static void spi_tx_dma_config(const uint8_t *mem_addr, uint32_t data_size, bool 
     /* 同一个DMA流同一时刻只能使能一个通道，配置前必须先失能 */
     DMA_Cmd(KEY_SCAN_SPI_TX_DMA_STREAM, DISABLE);
     /* 等待流完全停止（硬件有延迟，写EN=0后需要几个DMA时钟周期才真正停止） */
-    while (DMA_GetCmdStatus(KEY_SCAN_SPI_TX_DMA_STREAM) != DISABLE)
-        ;
+    {
+        uint32_t dma_stop_timeout = SPI_TIME_OUT;
+        while (DMA_GetCmdStatus(KEY_SCAN_SPI_TX_DMA_STREAM) != DISABLE)
+        {
+            if (dma_stop_timeout-- == 0) break;
+        }
+    }
     /* 复位流的所有寄存器到默认值，防止上次配置残留 */
     DMA_DeInit(KEY_SCAN_SPI_TX_DMA_STREAM);
     /* 清除上次传输遗留的中断标志位，避免配置后立即误触发中断 */
@@ -375,8 +384,13 @@ static void spi_rx_dma_config(uint8_t *mem_addr, uint32_t data_size, bool mem_in
     /* 同一个DMA流同一时刻只能使能一个通道，配置前必须先失能 */
     DMA_Cmd(KEY_SCAN_SPI_RX_DMA_STREAM, DISABLE);
     /* 等待流完全停止（硬件有延迟，写EN=0后需要几个DMA时钟周期才真正停止） */
-    while (DMA_GetCmdStatus(KEY_SCAN_SPI_RX_DMA_STREAM) != DISABLE)
-        ;
+    {
+        uint32_t dma_stop_timeout = SPI_TIME_OUT;
+        while (DMA_GetCmdStatus(KEY_SCAN_SPI_RX_DMA_STREAM) != DISABLE)
+        {
+            if (dma_stop_timeout-- == 0) break;
+        }
+    }
     /* 复位流的所有寄存器到默认值，防止上次配置残留 */
     DMA_DeInit(KEY_SCAN_SPI_RX_DMA_STREAM);
     /* 清除上次传输遗留的中断标志位，避免配置后立即误触发中断 */
@@ -407,9 +421,14 @@ static void spi_dma_cleanup(void)
 {
     /* 关闭SPI的DMA请求，防止DMA流已停止但SPI仍在发出无人响应的请求 */
     SPI_I2S_DMACmd(KEY_SCAN_SPI, SPI_I2S_DMAReq_Tx | SPI_I2S_DMAReq_Rx, DISABLE);
+    /* 关闭RX DMA传输完成中断，和传输前的 DMA_ITConfig ENABLE 对称 */
+    DMA_ITConfig(KEY_SCAN_SPI_RX_DMA_STREAM, DMA_IT_TC, DISABLE);
     /* 停止TX/RX DMA流，下次传输前会重新配置 */
     DMA_Cmd(KEY_SCAN_SPI_TX_DMA_STREAM, DISABLE);
     DMA_Cmd(KEY_SCAN_SPI_RX_DMA_STREAM, DISABLE);
+    /* 清除DMA中断标志位，防止残留标志导致下次误触发 */
+    DMA_ClearITPendingBit(KEY_SCAN_SPI_RX_DMA_STREAM, KEY_SCAN_SPI_RX_DMA_IT_TC);
+    DMA_ClearITPendingBit(KEY_SCAN_SPI_TX_DMA_STREAM, KEY_SCAN_SPI_TX_DMA_IT_TC);
     /* 清除同步指针，ISR不再访问已完成的sync */
     g_spi_dma_sync_ptr = NULL;
 }
@@ -428,9 +447,9 @@ static bsp_status_e spi_send_multi_data_dma(spi_id_e id, const uint8_t* send_dat
 {
     switch (id)
     {
-    case SPI_ID_KEY_SACN:
+    case SPI_ID_KEY_SCAN:
     {
-        if ((stm32f4_spi_base_config[SPI_ID_KEY_SACN].SPI_Direction & SPI_Direction_2Lines_FullDuplex) !=
+        if ((stm32f4_spi_base_config[SPI_ID_KEY_SCAN].SPI_Direction & SPI_Direction_2Lines_FullDuplex) !=
             SPI_Direction_2Lines_FullDuplex)
         {
             return BSP_STAT_INVALID_PARAMS;
@@ -439,7 +458,7 @@ static bsp_status_e spi_send_multi_data_dma(spi_id_e id, const uint8_t* send_dat
         KEY_SCAN_SPI_DMA_CLK_INIT(KEY_SCAN_SPI_DMA_CLK, ENABLE);
 
         /* 保存sync指针供ISR使用 */
-        g_spi_dma_sync_ptr = (spi_dma_sync_t *)sync;
+        g_spi_dma_sync_ptr = sync;
 
         /* 配置TX DMA：发送用户数据 */
         spi_tx_dma_config(send_data, data_size, true);
@@ -457,10 +476,14 @@ static bsp_status_e spi_send_multi_data_dma(spi_id_e id, const uint8_t* send_dat
         DMA_Cmd(KEY_SCAN_SPI_RX_DMA_STREAM, ENABLE);
         DMA_Cmd(KEY_SCAN_SPI_TX_DMA_STREAM, ENABLE);
 
-        /* 阻塞等待DMA完成 */
+        /* 阻塞等待DMA完成，带超时保护 */
         if (sync && sync->wait)
         {
-            sync->wait(sync->handle);
+            if (!sync->wait(sync->handle, 100))
+            {
+                spi_dma_cleanup();
+                return BSP_STAT_TIME_OUT;
+            }
         }
 
         spi_dma_cleanup();
@@ -489,9 +512,9 @@ static bsp_status_e spi_receive_multi_data_dma(spi_id_e id, uint8_t* receive_dat
 {
     switch (id)
     {
-    case SPI_ID_KEY_SACN:
+    case SPI_ID_KEY_SCAN:
     {
-        if ((stm32f4_spi_base_config[SPI_ID_KEY_SACN].SPI_Direction & SPI_Direction_2Lines_FullDuplex) !=
+        if ((stm32f4_spi_base_config[SPI_ID_KEY_SCAN].SPI_Direction & SPI_Direction_2Lines_FullDuplex) !=
             SPI_Direction_2Lines_FullDuplex)
         {
             return BSP_STAT_INVALID_PARAMS;
@@ -500,7 +523,7 @@ static bsp_status_e spi_receive_multi_data_dma(spi_id_e id, uint8_t* receive_dat
         KEY_SCAN_SPI_DMA_CLK_INIT(KEY_SCAN_SPI_DMA_CLK, ENABLE);
 
         /* 保存sync指针供ISR使用 */
-        g_spi_dma_sync_ptr = (spi_dma_sync_t *)sync;
+        g_spi_dma_sync_ptr = sync;
 
         /* 配置TX DMA：发送dummy字节产生时钟 */
         spi_tx_dma_config(&s_dummy_tx, data_size, false);
@@ -518,10 +541,14 @@ static bsp_status_e spi_receive_multi_data_dma(spi_id_e id, uint8_t* receive_dat
         DMA_Cmd(KEY_SCAN_SPI_RX_DMA_STREAM, ENABLE);
         DMA_Cmd(KEY_SCAN_SPI_TX_DMA_STREAM, ENABLE);
 
-        /* 阻塞等待DMA完成 */
+        /* 阻塞等待DMA完成，带超时保护 */
         if (sync && sync->wait)
         {
-            sync->wait(sync->handle);
+            if (!sync->wait(sync->handle, 100))
+            {
+                spi_dma_cleanup();
+                return BSP_STAT_TIME_OUT;
+            }
         }
 
         spi_dma_cleanup();
@@ -548,3 +575,30 @@ const spi_ops_t g_stm32f4_spi_driver_ = {
     .spi_send_multi_data_dma = spi_send_multi_data_dma,
     .spi_receive_multi_data_dma = spi_receive_multi_data_dma,
 };
+
+/**
+ * @brief  SPI RX DMA 中断处理（封装硬件细节，ISR 只需调用此函数）
+ * @note   处理传输完成(TC)和传输错误(TE)，通知等待任务
+ */
+void bsp_spi_dma_isr_handler(void)
+{
+    /* 传输完成 */
+    if (DMA_GetITStatus(KEY_SCAN_SPI_RX_DMA_STREAM, KEY_SCAN_SPI_RX_DMA_IT_TC))
+    {
+        DMA_ClearITPendingBit(KEY_SCAN_SPI_RX_DMA_STREAM, KEY_SCAN_SPI_RX_DMA_IT_TC);
+        g_spi_dma_isr_count++;
+        if (g_spi_dma_sync_ptr && g_spi_dma_sync_ptr->notify_from_isr)
+        {
+            g_spi_dma_sync_ptr->notify_from_isr(g_spi_dma_sync_ptr->handle);
+        }
+    }
+    /* 传输错误（TE）— 也通知等待任务，避免永久阻塞 */
+    if (DMA_GetITStatus(KEY_SCAN_SPI_RX_DMA_STREAM, DMA_IT_TEIF3))
+    {
+        DMA_ClearITPendingBit(KEY_SCAN_SPI_RX_DMA_STREAM, DMA_IT_TEIF3);
+        if (g_spi_dma_sync_ptr && g_spi_dma_sync_ptr->notify_from_isr)
+        {
+            g_spi_dma_sync_ptr->notify_from_isr(g_spi_dma_sync_ptr->handle);
+        }
+    }
+}

@@ -79,3 +79,26 @@ OBJECT 库没有 .a 文件，所以 PUBLIC 只传播头文件路径，不传播 
   从左到右单遍扫描，不回头
   前面的 .a 产生的未解析符号只能由后面的 .a 解析
 ```
+
+## ISR 落入 Default_Handler 死循环的诊断（实战 2026-06-13）
+
+**现象**：某中断触发后 CPU 卡死，GDB 调用栈顶显示 `WWDG_IRQHandler` 之类的
+weak 别名，指向 startup.s 的 `Default_Handler: b Infinite_Loop`。
+陷阱：GDB 把 Default_Handler 地址显示成首个 `.thumb_set` 别名（WWDG 排第一），
+**不代表真是该中断触发**——任何落到 Default_Handler 的中断都这么显示。
+
+**一把梭诊断**：`arm-none-eabi-nm -n xxx.elf | grep <IRQHandler名>`
+- `W` + 地址 == Default_Handler → 弱符号**没被覆盖**（病根）
+- `T` + 独立地址 → 已正确覆盖
+
+**弱符号未被覆盖的两种成因**：
+1. ISR 放 STATIC 库（本文上半主题）→ 链接器不提取 .o 覆盖弱符号。
+   解法：OBJECT 库 + `$<TARGET_OBJECTS:>` 注入 elf。
+2. **ISR 函数名宏未展开**（本次 bug）：it.c 用 `KEY_SCAN_SPI_RX_DMA_IRQHandler`
+   宏但没 include 定义它的头 → 宏不展开 → 编译出名字错误的孤立函数 → 向量表
+   的 `DMA1_Stream3_IRQHandler` 仍 weak → 孤立函数无人引用被 `--gc-sections`
+   回收。判据：nm it.c.obj 能看到孤立函数（T）+ U 引用，但 elf 里找不到它
+   （被 gc），而同 .obj 内被向量表引用的 NMI_Handler 等仍在 elf → 说明 it.o
+   链接了、只是这个函数名不对。
+   解法：ISR 路由宏（逻辑名→IRQHandler 符号）集中到 `bsp_isr_map.h`，it.c
+   include 它（不 include 整个 bsp_spi.h，保持 Bsp_ISR 编译隔离）。

@@ -67,17 +67,17 @@ if (PROJECT_PLATFORM STREQUAL "STM32F4")
     #       链接器不会从 .a 中提取 stm32f4xx_it.o 来覆盖弱符号
     #       → 中断向量指向 Default_Handler（死循环）→ 系统卡死
     # 解决：OBJECT 库直接注入可执行文件，绕过静态库的按需提取
+    # 注意：stm32f4xx_it.c 已移至 isr/ 子目录，aux_source_directory
+    #       只扫描单层目录不会收集到它，无需 FILTER 排除
     # =================================================================
-    list(FILTER Bsp_Platform_Src EXCLUDE REGEX "stm32f4xx_it\\.c$")
 
     add_library(Bsp_ISR OBJECT
-        ${CMAKE_SOURCE_DIR}/Bsp/stm32f4/stm32f4xx_it.c
+        ${CMAKE_SOURCE_DIR}/Bsp/stm32f4/isr/stm32f4xx_it.c
     )
     target_include_directories(Bsp_ISR PRIVATE
-        ${CMAKE_SOURCE_DIR}/Bsp/stm32f4/      # stm32f4xx_it.h
-        ${CMAKE_SOURCE_DIR}/Bsp/stm32f4/spi   # bsp_spi.h
+        ${CMAKE_SOURCE_DIR}/Bsp/stm32f4/isr/   # stm32f4xx_it.h（ISR 独立目录）
     )
-    target_link_libraries(Bsp_ISR PRIVATE StdPeriph_Driver bsp_common_interface)
+    target_link_libraries(Bsp_ISR PRIVATE StdPeriph_Driver)
 
     # 平台头文件路径（PRIVATE：只有 Bsp_Driver 内部可见）
     target_include_directories(Bsp_Driver PRIVATE

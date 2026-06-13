@@ -1,5 +1,6 @@
 # 1. 忽略根目录下的 build 文件夹（不处理子目录中的 build）
 build/
+doc/
 
 # 2. 忽略所有层级的 build 文件夹（** 表示递归匹配）
 #**/build/
@@ -16,3 +17,4 @@ build/
 *.exe
 *.log
 .cache/
+.claude/worktrees/

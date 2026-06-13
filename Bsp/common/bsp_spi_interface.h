@@ -9,7 +9,7 @@
 typedef enum
 {
     // SPI_ID_LCD        = 0,    // LCD SPI
-    SPI_ID_KEY_SACN   = 0,    // 键盘扫描74HC165 HSPI
+    SPI_ID_KEY_SCAN   = 0,    // 键盘扫描74HC165 HSPI
     // SPI_ID_LED_Array  = 2,    // 指纹SPI
     SPI_ID_MAX        = 1,    // MAX
 } spi_id_e;
@@ -17,9 +17,9 @@ typedef enum
 // DMA同步机制（BSP层不依赖RTOS，通过函数指针注入同步原语）
 typedef struct
 {
-    void *handle;                          // 同步句柄（如SemaphoreHandle_t，对BSP透明）
-    void (*wait)(void *handle);            // 阻塞等待（如xSemaphoreTake）
-    void (*notify_from_isr)(void *handle); // ISR中通知（如xSemaphoreGiveFromISR）
+    void *handle;                                      // 同步句柄（如SemaphoreHandle_t，对BSP透明）
+    bool (*wait)(void *handle, uint32_t timeout_ms);   // 阻塞等待，返回true=收到通知 false=超时
+    void (*notify_from_isr)(void *handle);              // ISR中通知（如xSemaphoreGiveFromISR）
 } spi_dma_sync_t;
 
 // 定义SPI的逻辑ID

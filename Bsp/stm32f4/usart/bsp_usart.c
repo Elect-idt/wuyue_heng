@@ -2,7 +2,7 @@
  ******************************************************************************
  * @file    bsp_usart.c
  * @author  Pan
- * @version V1.0
+ * @version V2.0
  * @date    2025-12-06
  * @brief   USART驱动
  ******************************************************************************
@@ -11,469 +11,231 @@
  * Project: wuyue_heng
  *
  ******************************************************************************
+ * FIX-15: 用配置描述符表消除每函数 3 段 switch-case 的 copy-paste。
+ * 新增 USART 只需在 s_usart_cfg[] 加一行配置。
+ ******************************************************************************
  */
 
 #include "bsp_usart.h"
 
-/**
- * @brief  USART的GPIO配置
- * @note   无
- * @param  id:串口设备号
- * @retval 无
- */
-static void usart_gpio_config(uasrt_id_e id)
+/* USART 时钟使能函数类型（RCC_APB1PeriphClockCmd / RCC_APB2PeriphClockCmd 同签名） */
+typedef void (*usart_clk_cmd_fn)(uint32_t, FunctionalState);
+
+/* USART 硬件配置描述符：把每个串口的寄存器/引脚/时钟全部集中到一处 */
+typedef struct
 {
-    /* 结构体宏定义 */
+    USART_TypeDef     *inst;        /* USART 寄存器基址 */
+    usart_clk_cmd_fn   base_clk_cmd;/* USART 时钟使能函数（APB1 或 APB2） */
+    uint32_t           base_clk;    /* USART 时钟外设号 */
+    uint32_t           baud;        /* 波特率 */
+
+    GPIO_TypeDef      *tx_port;     /* TX GPIO 端口 */
+    uint16_t           tx_pin;      /* TX 引脚号 */
+    uint16_t           tx_pinsrc;   /* TX 引脚源（AF 配置用） */
+    uint8_t            tx_af;       /* TX 复用功能号 */
+    uint32_t           tx_clk;      /* TX GPIO 时钟外设号 */
+
+    GPIO_TypeDef      *rx_port;     /* RX GPIO 端口 */
+    uint16_t           rx_pin;      /* RX 引脚号 */
+    uint16_t           rx_pinsrc;   /* RX 引脚源（AF 配置用） */
+    uint8_t            rx_af;       /* RX 复用功能号 */
+    uint32_t           rx_clk;      /* RX GPIO 时钟外设号 */
+} usart_hw_config_t;
+
+/* 每个逻辑 ID 对应一份硬件配置（新增串口只需在此加一行） */
+static const usart_hw_config_t s_usart_cfg[USART_ID_MAX] = {
+    [USART_ID_DEBUG] = {
+        .inst = DEBUG_USART, .base_clk_cmd = DEBUG_USART_BASE_CLK_CMD, .base_clk = DEBUG_USART_CLK, .baud = DEBUG_USART_BAUD,
+        .tx_port = DEBUG_USART_TX_PORT, .tx_pin = DEBUG_USART_TX_PIN, .tx_pinsrc = DEBUG_USART_TX_PINSRC, .tx_af = DEBUG_USART_TX_AF, .tx_clk = DEBUG_USART_TX_CLK,
+        .rx_port = DEBUG_USART_RX_PORT, .rx_pin = DEBUG_USART_RX_PIN, .rx_pinsrc = DEBUG_USART_RX_PINSRC, .rx_af = DEBUG_USART_RX_AF, .rx_clk = DEBUG_USART_RX_CLK,
+    },
+    [USART_ID_BLT] = {
+        .inst = BLT_USART, .base_clk_cmd = BLT_USART_BASE_CLK_CMD, .base_clk = BLT_USART_CLK, .baud = BLT_USART_BAUD,
+        .tx_port = BLT_USART_TX_PORT, .tx_pin = BLT_USART_TX_PIN, .tx_pinsrc = BLT_USART_TX_PINSRC, .tx_af = BLT_USART_TX_AF, .tx_clk = BLT_USART_TX_CLK,
+        .rx_port = BLT_USART_RX_PORT, .rx_pin = BLT_USART_RX_PIN, .rx_pinsrc = BLT_USART_RX_PINSRC, .rx_af = BLT_USART_RX_AF, .rx_clk = BLT_USART_RX_CLK,
+    },
+    [USART_ID_FINGER] = {
+        .inst = FINGER_USART, .base_clk_cmd = FINGER_USART_BASE_CLK_CMD, .base_clk = FINGER_USART_CLK, .baud = FINGER_USART_BAUD,
+        .tx_port = FINGER_USART_TX_PORT, .tx_pin = FINGER_USART_TX_PIN, .tx_pinsrc = FINGER_USART_TX_PINSRC, .tx_af = FINGER_USART_TX_AF, .tx_clk = FINGER_USART_TX_CLK,
+        .rx_port = FINGER_USART_RX_PORT, .rx_pin = FINGER_USART_RX_PIN, .rx_pinsrc = FINGER_USART_RX_PINSRC, .rx_af = FINGER_USART_RX_AF, .rx_clk = FINGER_USART_RX_CLK,
+    },
+};
+
+/**
+ * @brief  USART的GPIO配置（所有 ID 共享一条路径）
+ * @param  cfg: 指向该串口的硬件配置
+ */
+static void usart_gpio_config(const usart_hw_config_t *cfg)
+{
     GPIO_InitTypeDef GPIO_InitStructure;
 
-    switch (id)
-    {
-    case USART_ID_DEBUG:
-    {
-        /* 开启时钟 */
-        DEBUG_USART_GPIO_CLK_CMD(DEBUG_USART_TX_CLK | DEBUG_USART_RX_CLK, ENABLE);
-        /* IO口内部用一个弱上拉增加带载能力 */
-        GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-        GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
-        GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-        /* TX复用 */
-        GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-        GPIO_InitStructure.GPIO_Pin = DEBUG_USART_TX_PIN;
-        GPIO_Init(DEBUG_USART_TX_PORT, &GPIO_InitStructure);
-        /* RX复用 */
-        GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-        GPIO_InitStructure.GPIO_Pin = DEBUG_USART_RX_PIN;
-        GPIO_Init(DEBUG_USART_RX_PORT, &GPIO_InitStructure);
-        /* 连接 PXX 到 USARTX_Tx */
-        GPIO_PinAFConfig(DEBUG_USART_TX_PORT, DEBUG_USART_TX_PINSRC, DEBUG_USART_TX_AF);
-        /*  连接 PXX 到 USARTX_Rx */
-        GPIO_PinAFConfig(DEBUG_USART_RX_PORT, DEBUG_USART_RX_PINSRC, DEBUG_USART_RX_AF);
-    }
-    break;
-    case USART_ID_BLT:
-    {
-        /* 开启时钟 */
-        BLT_USART_GPIO_CLK_CMD(BLT_USART_TX_CLK | BLT_USART_RX_CLK, ENABLE);
-        /* IO口内部用一个弱上拉增加带载能力 */
-        GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-        GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
-        GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-        /* TX复用 */
-        GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-        GPIO_InitStructure.GPIO_Pin = BLT_USART_TX_PIN;
-        GPIO_Init(BLT_USART_TX_PORT, &GPIO_InitStructure);
-        /* RX复用 */
-        GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-        GPIO_InitStructure.GPIO_Pin = BLT_USART_RX_PIN;
-        GPIO_Init(BLT_USART_RX_PORT, &GPIO_InitStructure);
-        /* 连接 PXX 到 USARTX_Tx */
-        GPIO_PinAFConfig(BLT_USART_TX_PORT, BLT_USART_TX_PINSRC, BLT_USART_TX_AF);
-        /*  连接 PXX 到 USARTX_Rx */
-        GPIO_PinAFConfig(BLT_USART_RX_PORT, BLT_USART_RX_PINSRC, BLT_USART_RX_AF);
-    }
-    break;
-    case USART_ID_FINGER:
-    {
-        /* 开启时钟 */
-        FINGER_USART_GPIO_CLK_CMD(FINGER_USART_TX_CLK | FINGER_USART_RX_CLK, ENABLE);
-        /* IO口内部用一个弱上拉增加带载能力 */
-        GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-        GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
-        GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-        /* TX复用 */
-        GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-        GPIO_InitStructure.GPIO_Pin = FINGER_USART_TX_PIN;
-        GPIO_Init(FINGER_USART_TX_PORT, &GPIO_InitStructure);
-        /* RX复用 */
-        GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-        GPIO_InitStructure.GPIO_Pin = FINGER_USART_RX_PIN;
-        GPIO_Init(FINGER_USART_RX_PORT, &GPIO_InitStructure);
-        /* 连接 PXX 到 USARTX_Tx */
-        GPIO_PinAFConfig(FINGER_USART_TX_PORT, FINGER_USART_TX_PINSRC, FINGER_USART_TX_AF);
-        /*  连接 PXX 到 USARTX_Rx */
-        GPIO_PinAFConfig(FINGER_USART_RX_PORT, FINGER_USART_RX_PINSRC, FINGER_USART_RX_AF);
-    }
-    break;
-    default:
-        break;
-    }
+    /* 开启 TX/RX GPIO 时钟 */
+    RCC_AHB1PeriphClockCmd(cfg->tx_clk | cfg->rx_clk, ENABLE);
+
+    /* IO口内部用一个弱上拉增加带载能力 */
+    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+
+    /* TX 复用 */
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+    GPIO_InitStructure.GPIO_Pin = cfg->tx_pin;
+    GPIO_Init(cfg->tx_port, &GPIO_InitStructure);
+    /* RX 复用 */
+    GPIO_InitStructure.GPIO_Pin = cfg->rx_pin;
+    GPIO_Init(cfg->rx_port, &GPIO_InitStructure);
+
+    /* 连接引脚到 USART 复用功能 */
+    GPIO_PinAFConfig(cfg->tx_port, cfg->tx_pinsrc, cfg->tx_af);
+    GPIO_PinAFConfig(cfg->rx_port, cfg->rx_pinsrc, cfg->rx_af);
 }
 
 /**
- * @brief  串口1的基础配置
+ * @brief  USART基础配置（所有 ID 共享一条路径）
  * @note   115200-8-1-0-No
- * @param  id:串口设备号
- * @retval 无
+ * @param  cfg: 指向该串口的硬件配置
  */
-static void usart_base_config(uasrt_id_e id)
+static void usart_base_config(const usart_hw_config_t *cfg)
 {
+    USART_InitTypeDef USART_InitStructure;
 
-    switch (id)
-    {
-    case USART_ID_DEBUG:
-    {
-        /* 结构体宏定义 */
-        USART_InitTypeDef USART_InitStructure;
-        /* 开启时钟 */
-        DEBUG_USART_BASE_CLK_CMD(DEBUG_USART_CLK, ENABLE);
-        /* 串口基础配置 115200-8-1-0-No */
-        USART_InitStructure.USART_BaudRate = DEBUG_USART_BAUD;
-        USART_InitStructure.USART_WordLength = USART_WordLength_8b;
-        USART_InitStructure.USART_StopBits = USART_StopBits_1;
-        USART_InitStructure.USART_Parity = USART_Parity_No;
-        USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
-        USART_InitStructure.USART_Mode = USART_Mode_Tx | USART_Mode_Rx;
-        USART_Init(DEBUG_USART, &USART_InitStructure);
-        /* 失能串口接收中断 */
-        USART_ITConfig(DEBUG_USART, USART_IT_RXNE, DISABLE);
-        // /* 使能串口空闲中断 */
-        // USART_ITConfig(DEBUG_USART, USART_IT_IDLE, ENABLE);
-        // /* 使能串口DMA请求 */
-        // USART_DMACmd(DEBUG_USART, USART_DMAReq_Rx, ENABLE);
-        /* 使能串口 */
-        USART_Cmd(DEBUG_USART, ENABLE);
-    }
-    break;
-    case USART_ID_BLT:
-    {
-        /* 结构体宏定义 */
-        USART_InitTypeDef USART_InitStructure;
-        /* 开启时钟 */
-        BLT_USART_BASE_CLK_CMD(BLT_USART_CLK, ENABLE);
-        /* 串口基础配置 115200-8-1-0-No */
-        USART_InitStructure.USART_BaudRate = BLT_USART_BAUD;
-        USART_InitStructure.USART_WordLength = USART_WordLength_8b;
-        USART_InitStructure.USART_StopBits = USART_StopBits_1;
-        USART_InitStructure.USART_Parity = USART_Parity_No;
-        USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
-        USART_InitStructure.USART_Mode = USART_Mode_Tx | USART_Mode_Rx;
-        USART_Init(BLT_USART, &USART_InitStructure);
-        /* 失能串口接收中断 */
-        USART_ITConfig(BLT_USART, USART_IT_RXNE, DISABLE);
-        // /* 使能串口空闲中断 */
-        // USART_ITConfig(BLT_USART, USART_IT_IDLE, ENABLE);
-        // /* 使能串口DMA请求 */
-        // USART_DMACmd(BLT_USART, USART_DMAReq_Rx, ENABLE);
-        /* 使能串口 */
-        USART_Cmd(BLT_USART, ENABLE);
-    }
-    break;
-    case USART_ID_FINGER:
-    {
-        /* 结构体宏定义 */
-        USART_InitTypeDef USART_InitStructure;
-        /* 开启时钟 */
-        FINGER_USART_BASE_CLK_CMD(FINGER_USART_CLK, ENABLE);
-        /* 串口基础配置 115200-8-1-0-No */
-        USART_InitStructure.USART_BaudRate = FINGER_USART_BAUD;
-        USART_InitStructure.USART_WordLength = USART_WordLength_8b;
-        USART_InitStructure.USART_StopBits = USART_StopBits_1;
-        USART_InitStructure.USART_Parity = USART_Parity_No;
-        USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
-        USART_InitStructure.USART_Mode = USART_Mode_Tx | USART_Mode_Rx;
-        USART_Init(FINGER_USART, &USART_InitStructure);
-        /* 失能串口接收中断 */
-        USART_ITConfig(FINGER_USART, USART_IT_RXNE, DISABLE);
-        // /* 使能串口空闲中断 */
-        // USART_ITConfig(FINGER_USART, USART_IT_IDLE, ENABLE);
-        // /* 使能串口DMA请求 */
-        // USART_DMACmd(FINGER_USART, USART_DMAReq_Rx, ENABLE);
-        /* 使能串口 */
-        USART_Cmd(FINGER_USART, ENABLE);
-    }
-    break;
-    default:
-        break;
-    }
+    /* 开启 USART 时钟（APB1 或 APB2 由描述符中的函数指针决定） */
+    cfg->base_clk_cmd(cfg->base_clk, ENABLE);
+
+    /* 串口基础配置 115200-8-1-0-No */
+    USART_InitStructure.USART_BaudRate = cfg->baud;
+    USART_InitStructure.USART_WordLength = USART_WordLength_8b;
+    USART_InitStructure.USART_StopBits = USART_StopBits_1;
+    USART_InitStructure.USART_Parity = USART_Parity_No;
+    USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
+    USART_InitStructure.USART_Mode = USART_Mode_Tx | USART_Mode_Rx;
+    USART_Init(cfg->inst, &USART_InitStructure);
+    /* 失能串口接收中断 */
+    USART_ITConfig(cfg->inst, USART_IT_RXNE, DISABLE);
+    /* 使能串口 */
+    USART_Cmd(cfg->inst, ENABLE);
 }
 
 /**
  * @brief  串口初始化
- * @note   无
  * @param  id:串口设备号
  * @retval status:0 无错误；其他 有错误
  */
-static bsp_status_e stm32f4_uasrt_init(uasrt_id_e id)
+static bsp_status_e stm32f4_usart_init(usart_id_e id)
 {
     if (id >= USART_ID_MAX)
     {
         return BSP_STAT_CHOOSE_ERROR_TARGET;
     }
-    else
-    {
-        usart_gpio_config(id);
-        usart_base_config(id);
-    }
+    const usart_hw_config_t *cfg = &s_usart_cfg[id];
+    usart_gpio_config(cfg);
+    usart_base_config(cfg);
     return BSP_STAT_TRUE;
 }
 
 /**
  * @brief  串口发送一个字节
- * @note   无
  * @param  id:串口设备号
  * @param  ch:要发送的字节
  * @retval status:0 无错误；其他 有错误
  */
-static bsp_status_e stm32f4_usart_send_byte(uasrt_id_e id, uint8_t ch)
+static bsp_status_e stm32f4_usart_send_byte(usart_id_e id, uint8_t ch)
 {
-    switch (id)
-    {
-    case USART_ID_DEBUG:
-    {
-        /* 发送一个字节数据到USART */
-        USART_SendData(DEBUG_USART, ch);
-
-        /* 等待发送数据寄存器为空 */
-        while (USART_GetFlagStatus(DEBUG_USART, USART_FLAG_TXE) == RESET)
-            ;
-    }
-    break;
-    case USART_ID_BLT:
-    {
-        /* 发送一个字节数据到USART */
-        USART_SendData(BLT_USART, ch);
-
-        /* 等待发送数据寄存器为空 */
-        while (USART_GetFlagStatus(BLT_USART, USART_FLAG_TXE) == RESET)
-            ;
-    }
-    break;
-    case USART_ID_FINGER:
-    {
-        /* 发送一个字节数据到USART */
-        USART_SendData(FINGER_USART, ch);
-
-        /* 等待发送数据寄存器为空 */
-        while (USART_GetFlagStatus(FINGER_USART, USART_FLAG_TXE) == RESET)
-            ;
-    }
-    break;
-    default:
+    if (id >= USART_ID_MAX)
     {
         return BSP_STAT_CHOOSE_ERROR_TARGET;
     }
-    break;
-    }
+    const usart_hw_config_t *cfg = &s_usart_cfg[id];
+    USART_SendData(cfg->inst, ch);
+    while (USART_GetFlagStatus(cfg->inst, USART_FLAG_TXE) == RESET)
+        ;
     return BSP_STAT_TRUE;
 }
 
 /**
  * @brief  串口发送一串字符串
- * @note   无
  * @param  id:串口设备号
  * @param  str:要发送的字符串，必须以\0结尾
  * @retval status:0 无错误；其他 有错误
  */
-static bsp_status_e stm32f4_usart_send_string(uasrt_id_e id, char* str)
+static bsp_status_e stm32f4_usart_send_string(usart_id_e id, char* str)
 {
-    unsigned int k = 0;
-    switch (id)
-    {
-    case USART_ID_DEBUG:
-    {
-        do
-        {
-            stm32f4_usart_send_byte(id, *(str + k));
-            k++;
-        } while (*(str + k) != '\0');
-
-        /* 等待发送完成 */
-        while (USART_GetFlagStatus(DEBUG_USART, USART_FLAG_TC) == RESET)
-        {
-        }
-    }
-    break;
-    case USART_ID_BLT:
-    {
-        do
-        {
-            stm32f4_usart_send_byte(id, *(str + k));
-            k++;
-        } while (*(str + k) != '\0');
-
-        /* 等待发送完成 */
-        while (USART_GetFlagStatus(BLT_USART, USART_FLAG_TC) == RESET)
-        {
-        }
-    }
-    break;
-    case USART_ID_FINGER:
-    {
-        do
-        {
-            stm32f4_usart_send_byte(id, *(str + k));
-            k++;
-        } while (*(str + k) != '\0');
-
-        /* 等待发送完成 */
-        while (USART_GetFlagStatus(FINGER_USART, USART_FLAG_TC) == RESET)
-        {
-        }
-    }
-    break;
-    default:
+    if (id >= USART_ID_MAX)
     {
         return BSP_STAT_CHOOSE_ERROR_TARGET;
     }
-    break;
+    const usart_hw_config_t *cfg = &s_usart_cfg[id];
+    unsigned int k = 0;
+    while (str[k] != '\0')
+    {
+        stm32f4_usart_send_byte(id, str[k]);
+        k++;
     }
+    /* 等待发送完成 */
+    while (USART_GetFlagStatus(cfg->inst, USART_FLAG_TC) == RESET)
+        ;
     return BSP_STAT_TRUE;
 }
 
 /**
  * @brief  串口发送一个hex数
- * @note   无
  * @param  id:串口设备号
  * @param  hex:要发送的半字
  * @retval status:0 无错误；其他 有错误
  */
-static bsp_status_e stm32f4_usart_send_hex(uasrt_id_e id, uint16_t hex)
+static bsp_status_e stm32f4_usart_send_hex(usart_id_e id, uint16_t hex)
 {
-    uint8_t temp_h, temp_l;
-    switch (id)
-    {
-    case USART_ID_DEBUG:
-    {
-        /* 取出高八位 */
-        temp_h = (hex & 0XFF00) >> 8;
-        /* 取出低八位 */
-        temp_l = hex & 0XFF;
-
-        /* 发送高八位 */
-        USART_SendData(DEBUG_USART, temp_h);
-        while (USART_GetFlagStatus(DEBUG_USART, USART_FLAG_TXE) == RESET)
-            ;
-
-        /* 发送低八位 */
-        USART_SendData(DEBUG_USART, temp_l);
-        while (USART_GetFlagStatus(DEBUG_USART, USART_FLAG_TXE) == RESET)
-            ;
-    }
-    break;
-    case USART_ID_BLT:
-    {
-        /* 取出高八位 */
-        temp_h = (hex & 0XFF00) >> 8;
-        /* 取出低八位 */
-        temp_l = hex & 0XFF;
-
-        /* 发送高八位 */
-        USART_SendData(BLT_USART, temp_h);
-        while (USART_GetFlagStatus(BLT_USART, USART_FLAG_TXE) == RESET)
-            ;
-
-        /* 发送低八位 */
-        USART_SendData(BLT_USART, temp_l);
-        while (USART_GetFlagStatus(BLT_USART, USART_FLAG_TXE) == RESET)
-            ;
-    }
-    break;
-    case USART_ID_FINGER:
-    {
-        /* 取出高八位 */
-        temp_h = (hex & 0XFF00) >> 8;
-        /* 取出低八位 */
-        temp_l = hex & 0XFF;
-
-        /* 发送高八位 */
-        USART_SendData(FINGER_USART, temp_h);
-        while (USART_GetFlagStatus(FINGER_USART, USART_FLAG_TXE) == RESET)
-            ;
-
-        /* 发送低八位 */
-        USART_SendData(FINGER_USART, temp_l);
-        while (USART_GetFlagStatus(FINGER_USART, USART_FLAG_TXE) == RESET)
-            ;
-    }
-    break;
-    default:
+    if (id >= USART_ID_MAX)
     {
         return BSP_STAT_CHOOSE_ERROR_TARGET;
     }
-    break;
-    }
+    const usart_hw_config_t *cfg = &s_usart_cfg[id];
+    uint8_t temp_h = (hex & 0xFF00) >> 8;
+    uint8_t temp_l = hex & 0xFF;
+    /* 发送高八位 */
+    USART_SendData(cfg->inst, temp_h);
+    while (USART_GetFlagStatus(cfg->inst, USART_FLAG_TXE) == RESET)
+        ;
+    /* 发送低八位 */
+    USART_SendData(cfg->inst, temp_l);
+    while (USART_GetFlagStatus(cfg->inst, USART_FLAG_TXE) == RESET)
+        ;
     return BSP_STAT_TRUE;
 }
 
 /**
  * @brief  串口发送一个u8数组
- * @note   无
  * @param  id:串口设备号
- * @param  ch:要发送的字节
+ * @param  array:要发送的数组
+ * @param  num:数组长度
  * @retval status:0 无错误；其他 有错误
  */
-static bsp_status_e stm32f4_usart_send_array(uasrt_id_e id, uint8_t* array, uint16_t num)
+static bsp_status_e stm32f4_usart_send_array(usart_id_e id, uint8_t* array, uint16_t num)
 {
-    uint8_t i;
-
-    switch (id)
-    {
-    case USART_ID_DEBUG:
-    {
-        for (i = 0; i < num; i++)
-        {
-            /* 发送一个字节数据到USART */
-            stm32f4_usart_send_byte(USART_ID_DEBUG, array[i]);
-        }
-        /* 等待发送完成 */
-        while (USART_GetFlagStatus(DEBUG_USART, USART_FLAG_TC) == RESET)
-            ;
-    }
-    break;
-    case USART_ID_BLT:
-    {
-        for (i = 0; i < num; i++)
-        {
-            /* 发送一个字节数据到USART */
-            stm32f4_usart_send_byte(USART_ID_BLT, array[i]);
-        }
-        /* 等待发送完成 */
-        while (USART_GetFlagStatus(BLT_USART, USART_FLAG_TC) == RESET)
-            ;
-    }
-    break;
-    case USART_ID_FINGER:
-    {
-        for (i = 0; i < num; i++)
-        {
-            /* 发送一个字节数据到USART */
-            stm32f4_usart_send_byte(USART_ID_FINGER, array[i]);
-        }
-        /* 等待发送完成 */
-        while (USART_GetFlagStatus(FINGER_USART, USART_FLAG_TC) == RESET)
-            ;
-    }
-    break;
-    default:
+    if (id >= USART_ID_MAX)
     {
         return BSP_STAT_CHOOSE_ERROR_TARGET;
     }
-    break;
+    const usart_hw_config_t *cfg = &s_usart_cfg[id];
+    uint16_t i;
+    for (i = 0; i < num; i++)
+    {
+        stm32f4_usart_send_byte(id, array[i]);
     }
+    /* 等待发送完成 */
+    while (USART_GetFlagStatus(cfg->inst, USART_FLAG_TC) == RESET)
+        ;
     return BSP_STAT_TRUE;
 }
 
-// 重写_write()（推荐）在ARM GCC环境中，通常使用_write函数进行重定向
-int _write(int file, char* ptr, int len)
-{
-    for (int i = 0; i < len; i++)
-    {
-        // 1. 发送单个字符
-        USART_SendData(DEBUG_USART, (uint8_t)ptr[i]);
-
-        // 2. 等待发送完成（确保不覆盖数据寄存器）
-        while (USART_GetFlagStatus(DEBUG_USART, USART_FLAG_TXE) == RESET)
-            ;
-    }
-    return len;
-}
+// _write() 已移到 Core/src/syscalls.c，通过 BSP 抽象层发送（FIX-11）
 
 // STM32F4平台USART驱动实例，实现usart_ops_t定义的统一操作接口
 // [C++对照] 对应具体产品(Concrete Product)
 // 注：C中无继承，具体产品与抽象产品是同一类型，区别仅为函数指针指向了具体实现（类似填好的虚表）
 const usart_ops_t g_stm32f4_usart_driver_ = {
     .name = "STM32F4_USART_DRIVER",
-    .init = stm32f4_uasrt_init,
+    .init = stm32f4_usart_init,
     .usart_send_byte = stm32f4_usart_send_byte,
     .usart_send_string = stm32f4_usart_send_string,
     .usart_send_hex = stm32f4_usart_send_hex,

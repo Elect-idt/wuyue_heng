@@ -15,6 +15,7 @@
 
 #include "app_init.h"
 #include "bsp_interface.h"
+#include <stdio.h>
 
 /**
   * @brief  主函数
@@ -31,7 +32,8 @@ int32_t AppTaskCreate(void)
     int32_t status = APP_TASK_SUCCESS;
     BaseType_t xReturn = pdPASS; /* 定义一个创建信息返回值，默认为pdPASS */
 
-    taskENTER_CRITICAL(); // 进入临界区;
+    /* 调度器未启动，无需 taskENTER_CRITICAL（且 xTaskCreate 内部会分配内存，
+       长时间屏蔽中断会增加延迟），直接创建即可 */
 
     /* ①创建按键扫描任务（高优先级，10ms周期） */
     xReturn = xTaskCreate((TaskFunction_t)Key_Scan_Task, (const char*)"Key_Scan_Task", (uint16_t)256, (void*)NULL,
@@ -49,11 +51,23 @@ int32_t AppTaskCreate(void)
         status = APP_TASK_FAIL;
     }
 
-    taskEXIT_CRITICAL(); // 退出临界区
-
     /* 启动任务调度 */
     if (status == APP_TASK_SUCCESS)
         vTaskStartScheduler(); /* 启动任务，开启调度 */
 
     return status;
+}
+
+/**
+ * @brief  FreeRTOS 栈溢出检测回调（configCHECK_FOR_STACK_OVERFLOW = 2 时需要）
+ * @param  xTask: 溢出任务句柄
+ * @param  pcTaskName: 溢出任务名称
+ */
+void vApplicationStackOverflowHook(TaskHandle_t xTask, char* pcTaskName)
+{
+    (void)xTask;
+    printf("STACK OVERFLOW: %s\r\n", pcTaskName);
+    while (1)
+    {
+    }
 }

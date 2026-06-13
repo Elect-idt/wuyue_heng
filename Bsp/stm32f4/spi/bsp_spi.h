@@ -45,18 +45,14 @@
 #define KEY_SCAN_SPI_RX_DMA_CHANNEL        DMA_Channel_0
 #define KEY_SCAN_SPI_RX_DMA_STREAM         DMA1_Stream3
 #define KEY_SCAN_SPI_RX_DMA_IRQn           DMA1_Stream3_IRQn
-#define KEY_SCAN_SPI_RX_DMA_IRQHandler     DMA1_Stream3_IRQHandler
 #define KEY_SCAN_SPI_RX_DMA_IT_TC          DMA_IT_TCIF3
 
 /****** KEY_SCAN_SPI TX DMA配置（全双工DMA接收时发送dummy字节产生时钟） ******/
 #define KEY_SCAN_SPI_TX_DMA_STREAM         DMA1_Stream4
 #define KEY_SCAN_SPI_TX_DMA_CHANNEL        DMA_Channel_0
 #define KEY_SCAN_SPI_TX_DMA_IRQn           DMA1_Stream4_IRQn
-#define KEY_SCAN_SPI_TX_DMA_IRQHandler     DMA1_Stream4_IRQHandler
 #define KEY_SCAN_SPI_TX_DMA_IT_TC          DMA_IT_TCIF4
 
 extern const spi_ops_t g_stm32f4_spi_driver_;
-extern spi_dma_sync_t *g_spi_dma_sync_ptr;
-extern volatile uint32_t g_spi_dma_isr_count; /* DEBUG: ISR触发计数 */
 
 #endif //__BSP_SPI_H_

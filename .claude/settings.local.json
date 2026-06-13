@@ -3,7 +3,19 @@
     "allow": [
       "Bash(cd:*)",
       "Bash(find:*)",
-      "Bash(openocd:*)"
+      "Bash(openocd:*)",
+      "WebSearch",
+      "Bash(./run.sh)",
+      "Bash(bash run.sh)",
+      "Bash(mkdir -p memory)",
+      "Bash(cp \"C:/Users/Administrator/.claude/projects/j--ArmsApprentice-wuyue-heng-2-software-wuyue-heng/memory/project-p0-fixes-completed.md\" memory/)",
+      "Bash(cp \"C:/Users/Administrator/.claude/projects/j--ArmsApprentice-wuyue-heng-2-software-wuyue-heng/memory/reference-ccmram-vs-sram.md\" memory/)",
+      "Bash(cp \"J:/ArmsApprentice/wuyue_heng/2.software/wuyue_heng/.claude/cmake-linking-knowledge.md\" \"J:/ArmsApprentice/wuyue_heng/2.software/wuyue_heng/.claude/memory/reference-cmake-linking.md\" && \\\\ *)",
+      "Bash(cmake --build . -- -j16)",
+      "Bash(arm-none-eabi-nm -n wuyue_heng.elf)"
+    ],
+    "additionalDirectories": [
+      "J:\\ArmsApprentice\\wuyue_heng\\2.software\\wuyue_heng\\.claude"
     ]
   }
 }

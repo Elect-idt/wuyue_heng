@@ -29,6 +29,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include <sys/times.h>
+#include "bsp_interface.h"
 
 
 /* Variables */
@@ -77,14 +78,16 @@ __attribute__((weak)) int _read(int file, char *ptr, int len)
   return len;
 }
 
-__attribute__((weak)) int _write(int file, char *ptr, int len)
+/* printf 输出重定向 — 通过 BSP 抽象层发送，不直接调 SPL API（FIX-11） */
+int _write(int file, char *ptr, int len)
 {
   (void)file;
-  int DataIdx;
-
-  for (DataIdx = 0; DataIdx < len; DataIdx++)
+  if (g_board_hw_bsp_ && g_board_hw_bsp_->usart_ops)
   {
-    __io_putchar(*ptr++);
+    for (int DataIdx = 0; DataIdx < len; DataIdx++)
+    {
+      g_board_hw_bsp_->usart_ops->usart_send_byte(USART_ID_DEBUG, (uint8_t)*ptr++);
+    }
   }
   return len;
 }

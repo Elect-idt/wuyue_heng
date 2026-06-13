@@ -24,7 +24,10 @@ static uint8_t s_key_data[KEY_SCAN_NUM_CHIPS];
 static SemaphoreHandle_t s_spi_dma_sem;
 static spi_dma_sync_t s_spi_dma_sync;
 
-static void spi_dma_wait(void* handle) { xSemaphoreTake((SemaphoreHandle_t)handle, portMAX_DELAY); }
+static bool spi_dma_wait(void* handle, uint32_t timeout_ms)
+{
+    return xSemaphoreTake((SemaphoreHandle_t)handle, pdMS_TO_TICKS(timeout_ms)) == pdTRUE;
+}
 
 static void spi_dma_notify_from_isr(void* handle)
 {
@@ -40,12 +43,13 @@ void Key_Scan_Task(void* param)
 
     /* 创建 DMA 同步信号量 */
     s_spi_dma_sem = xSemaphoreCreateBinary();
+    configASSERT(s_spi_dma_sem != NULL);
     s_spi_dma_sync.handle = s_spi_dma_sem;
     s_spi_dma_sync.wait = spi_dma_wait;
     s_spi_dma_sync.notify_from_isr = spi_dma_notify_from_isr;
 
-    /* 初始化 74HC165（3 片级联） */
-    hc165_init(&s_hc165, g_board_hw_bsp_->spi_ops, SPI_ID_KEY_SACN, &s_spi_dma_sync, KEY_SCAN_NUM_CHIPS,
+    /* 初始化 74HC165（KEY_SCAN_NUM_CHIPS 片级联） */
+    hc165_init(&s_hc165, g_board_hw_bsp_->spi_ops, SPI_ID_KEY_SCAN, &s_spi_dma_sync, KEY_SCAN_NUM_CHIPS,
                g_board_hw_bsp_->gpio_ops, GPIO_PIN_HC165_PL);
 
     printf("[HC165] init OK, %d chips, period %dms\r\n", KEY_SCAN_NUM_CHIPS, KEY_SCAN_PERIOD_MS);

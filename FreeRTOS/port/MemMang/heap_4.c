@@ -103,7 +103,10 @@ task.h is included from an application file. */
 	heap - probably so it can be placed in a special segment or address. */
 	extern uint8_t ucHeap[ configTOTAL_HEAP_SIZE ];
 #else
-	static uint8_t ucHeap[ configTOTAL_HEAP_SIZE ];
+	/* [wuyue_heng 改] 堆放到 CCMRAM（0x10000000，CPU 私有内存）。
+	   内容上电为随机值，由本文件 prvHeapInit() 显式初始化管理结构，不依赖初值。
+	   升级 FreeRTOS 时需保留此 __attribute__。 */
+	static uint8_t ucHeap[ configTOTAL_HEAP_SIZE ] __attribute__((section(".ccmram")));
 #endif /* configAPPLICATION_ALLOCATED_HEAP */
 
 /* Define the linked list structure.  This is used to link free blocks in order

@@ -165,15 +165,13 @@ SECTIONS
     _edata = .;        /* define a global symbol at data end */
   } >RAM AT> FLASH
 
-  _siccmram = LOADADDR(.ccmram);
-
-  /* CCM-RAM section
+  /* CCM-RAM section（NOLOAD：不占 Flash，上电内容由软件初始化）
   *
-  * IMPORTANT NOTE!
-  * If initialized variables will be placed in this section,
-  * the startup code needs to be modified to copy the init-values.
+  * 注意：本段目前只放 FreeRTOS 堆 ucHeap，其内容由 prvHeapInit() 初始化，
+  *       不需要从 Flash 拷贝初值。若以后放需要初值的变量，须在启动代码
+  *       中添加 CCMRAM 清零/拷贝逻辑（标准 ST 启动文件不处理 .ccmram）。
   */
-  .ccmram :
+  .ccmram (NOLOAD) :
   {
     . = ALIGN(4);
     _sccmram = .;       /* create a global symbol at ccmram start */
@@ -182,7 +180,7 @@ SECTIONS
 
     . = ALIGN(4);
     _eccmram = .;       /* create a global symbol at ccmram end */
-  } >CCMRAM AT> FLASH
+  } >CCMRAM
 
 
   /* Uninitialized data section */
@@ -212,16 +210,10 @@ SECTIONS
     . = ALIGN(8);
   } >RAM
 
-
-
-  /* Remove information from the standard libraries */
-  /DISCARD/ :
-  {
-    libc.a ( * )
-    libm.a ( * )
-    libgcc.a ( * )
-  }
-
+  /* FIX-30: 移除 /DISCARD/ 段。
+     原本丢弃 libc/libm/libgcc，但工具链用了 -u _printf_float（依赖 libgcc）、
+     -lm（数学库），且 --gc-sections 会自动裁剪未使用函数，/DISCARD/ 既冗余
+     又可能与命令行强制链接冲突。未使用部分交给 --gc-sections 处理即可。 */
 }
 
 

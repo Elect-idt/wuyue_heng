@@ -1,6 +1,6 @@
 #include "stm32f4_bsp.h"
 #include "bsp_gpio.h"
-#include "bsp_systick.h"
+// #include "bsp_systick.h"  ← FIX-05: SysTick 由 FreeRTOS 独占，从公共接口移除
 #include "bsp_usart.h"
 #include "bsp_spi.h"
 #include "misc.h"
@@ -22,5 +22,4 @@ static bsp_status_e stm32f4_platform_init(void)
 const board_hw_bsp_t g_stm32f4_bsp_ = {.platform_init = stm32f4_platform_init,
                                        .gpio_ops = &g_stm32f4_gpio_driver_,
                                        .usart_ops = &g_stm32f4_usart_driver_,
-                                       .systick_ops = &g_stm32f4_systick_driver_,
                                        .spi_ops = &g_stm32f4_spi_driver_};

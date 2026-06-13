@@ -81,7 +81,7 @@
 
 //断言
 #define vAssertCalled(char,int) printf("Error:%s,%d\r\n",char,int)
-#define configASSERT(x) if((x)==0) vAssertCalled(__FILE__,__LINE__)
+#define configASSERT(x) do { if((x)==0) vAssertCalled(__FILE__,__LINE__); } while(0)
 
 /************************************************************************
  *               FreeRTOS基础配置配置选项 
@@ -179,11 +179,11 @@
               FreeRTOS与内存申请有关配置选项                                               
 *****************************************************************/
 //支持动态内存申请
-#define configSUPPORT_DYNAMIC_ALLOCATION        1    
+#define configSUPPORT_DYNAMIC_ALLOCATION        1
 //支持静态内存
-#define configSUPPORT_STATIC_ALLOCATION					0					
-//系统所有总的堆大小
-#define configTOTAL_HEAP_SIZE					((size_t)(20*1024))    
+#define configSUPPORT_STATIC_ALLOCATION					0
+//系统所有总的堆大小（放 CCMRAM，64KB CCMRAM 留 16KB 余量给对齐和未来扩展）
+#define configTOTAL_HEAP_SIZE					((size_t)(48*1024))
 
 
 /***************************************************************
@@ -220,7 +220,7 @@
  * 大于0时启用堆栈溢出检测功能，如果使用此功能 
  * 用户必须提供一个栈溢出钩子函数，如果使用的话
  * 此值可以为1或者2，因为有两种栈溢出检测方法 */
-#define configCHECK_FOR_STACK_OVERFLOW			0   
+#define configCHECK_FOR_STACK_OVERFLOW			2
 
 
 /********************************************************************
