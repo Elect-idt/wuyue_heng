@@ -17,6 +17,7 @@
  */
 
 #include "bsp_usart.h"
+#include <stddef.h> /* NULL */
 
 /* USART 时钟使能函数类型（RCC_APB1PeriphClockCmd / RCC_APB2PeriphClockCmd 同签名） */
 typedef void (*usart_clk_cmd_fn)(uint32_t, FunctionalState);
@@ -147,8 +148,14 @@ static bsp_status_e stm32f4_usart_send_byte(usart_id_e id, uint8_t ch)
     }
     const usart_hw_config_t *cfg = &s_usart_cfg[id];
     USART_SendData(cfg->inst, ch);
+    uint32_t timeout = USART_TIME_OUT;
     while (USART_GetFlagStatus(cfg->inst, USART_FLAG_TXE) == RESET)
-        ;
+    {
+        if (timeout-- == 0)
+        {
+            return BSP_STAT_TIME_OUT;
+        }
+    }
     return BSP_STAT_TRUE;
 }
 
@@ -158,7 +165,7 @@ static bsp_status_e stm32f4_usart_send_byte(usart_id_e id, uint8_t ch)
  * @param  str:要发送的字符串，必须以\0结尾
  * @retval status:0 无错误；其他 有错误
  */
-static bsp_status_e stm32f4_usart_send_string(usart_id_e id, char* str)
+static bsp_status_e stm32f4_usart_send_string(usart_id_e id, const char* str)
 {
     if (id >= USART_ID_MAX)
     {
@@ -168,12 +175,22 @@ static bsp_status_e stm32f4_usart_send_string(usart_id_e id, char* str)
     unsigned int k = 0;
     while (str[k] != '\0')
     {
-        stm32f4_usart_send_byte(id, str[k]);
+        bsp_status_e status = stm32f4_usart_send_byte(id, str[k]);
+        if (status != BSP_STAT_TRUE)
+        {
+            return status;
+        }
         k++;
     }
     /* 等待发送完成 */
+    uint32_t timeout = USART_TIME_OUT;
     while (USART_GetFlagStatus(cfg->inst, USART_FLAG_TC) == RESET)
-        ;
+    {
+        if (timeout-- == 0)
+        {
+            return BSP_STAT_TIME_OUT;
+        }
+    }
     return BSP_STAT_TRUE;
 }
 
@@ -192,14 +209,27 @@ static bsp_status_e stm32f4_usart_send_hex(usart_id_e id, uint16_t hex)
     const usart_hw_config_t *cfg = &s_usart_cfg[id];
     uint8_t temp_h = (hex & 0xFF00) >> 8;
     uint8_t temp_l = hex & 0xFF;
+    uint32_t timeout;
     /* 发送高八位 */
     USART_SendData(cfg->inst, temp_h);
+    timeout = USART_TIME_OUT;
     while (USART_GetFlagStatus(cfg->inst, USART_FLAG_TXE) == RESET)
-        ;
+    {
+        if (timeout-- == 0)
+        {
+            return BSP_STAT_TIME_OUT;
+        }
+    }
     /* 发送低八位 */
     USART_SendData(cfg->inst, temp_l);
+    timeout = USART_TIME_OUT;
     while (USART_GetFlagStatus(cfg->inst, USART_FLAG_TXE) == RESET)
-        ;
+    {
+        if (timeout-- == 0)
+        {
+            return BSP_STAT_TIME_OUT;
+        }
+    }
     return BSP_STAT_TRUE;
 }
 
@@ -210,7 +240,7 @@ static bsp_status_e stm32f4_usart_send_hex(usart_id_e id, uint16_t hex)
  * @param  num:数组长度
  * @retval status:0 无错误；其他 有错误
  */
-static bsp_status_e stm32f4_usart_send_array(usart_id_e id, uint8_t* array, uint16_t num)
+static bsp_status_e stm32f4_usart_send_array(usart_id_e id, const uint8_t* array, uint16_t num)
 {
     if (id >= USART_ID_MAX)
     {
@@ -220,15 +250,54 @@ static bsp_status_e stm32f4_usart_send_array(usart_id_e id, uint8_t* array, uint
     uint16_t i;
     for (i = 0; i < num; i++)
     {
-        stm32f4_usart_send_byte(id, array[i]);
+        bsp_status_e status = stm32f4_usart_send_byte(id, array[i]);
+        if (status != BSP_STAT_TRUE)
+        {
+            return status;
+        }
     }
     /* 等待发送完成 */
+    uint32_t timeout = USART_TIME_OUT;
     while (USART_GetFlagStatus(cfg->inst, USART_FLAG_TC) == RESET)
-        ;
+    {
+        if (timeout-- == 0)
+        {
+            return BSP_STAT_TIME_OUT;
+        }
+    }
     return BSP_STAT_TRUE;
 }
 
 // _write() 已移到 Core/src/syscalls.c，通过 BSP 抽象层发送（FIX-11）
+
+/**
+ * @brief  串口接收一个字节（轮询，带超时）
+ * @param  id:串口设备号
+ * @param  ch:接收字节保存地址
+ * @retval status:0 无错误；其他 有错误
+ */
+static bsp_status_e stm32f4_usart_receive_byte(usart_id_e id, uint8_t* ch)
+{
+    if (id >= USART_ID_MAX)
+    {
+        return BSP_STAT_CHOOSE_ERROR_TARGET;
+    }
+    if (ch == NULL)
+    {
+        return BSP_STAT_INVALID_PARAMS;
+    }
+    const usart_hw_config_t *cfg = &s_usart_cfg[id];
+    uint32_t timeout = USART_TIME_OUT;
+    while (USART_GetFlagStatus(cfg->inst, USART_FLAG_RXNE) == RESET)
+    {
+        if (timeout-- == 0)
+        {
+            return BSP_STAT_TIME_OUT;
+        }
+    }
+    *ch = (uint8_t)USART_ReceiveData(cfg->inst);
+    return BSP_STAT_TRUE;
+}
 
 // STM32F4平台USART驱动实例，实现usart_ops_t定义的统一操作接口
 // [C++对照] 对应具体产品(Concrete Product)
@@ -240,4 +309,5 @@ const usart_ops_t g_stm32f4_usart_driver_ = {
     .usart_send_string = stm32f4_usart_send_string,
     .usart_send_hex = stm32f4_usart_send_hex,
     .usart_send_array = stm32f4_usart_send_array,
+    .usart_receive_byte = stm32f4_usart_receive_byte,
 };

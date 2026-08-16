@@ -22,7 +22,7 @@ wuyue_heng/
 │
 ├── Bsp/                            # BSP层（依赖倒置架构核心）
 │   ├── CMakeLists.txt
-│   ├── bsp_interface.c/h           # 平台调度 + Bsp_Init()
+│   ├── bsp_interface.c/h           # 平台工厂（宏选描述符）+ 平台无关调度 + Bsp_Init()
 │   ├── common/                     # 平台无关接口（led/usart/systick/spi_ops_t）
 │   └── stm32f4/                    # STM32F4平台实现
 │       ├── stm32f4_bsp.c/h         # 聚合所有驱动实例 + platform_init
@@ -97,7 +97,7 @@ app_task_lib (STATIC)            ← Apps 层，看不到 STM32 头文件
 - **依赖倒置**：Apps 和 Drivers 都依赖 Bsp_Interface，互不依赖
 - **抽象工厂**：board_hw_bsp_t 聚合所有 *_ops_t，切换芯片只换一个描述符
 - **策略模式**：*_ops_t 函数指针表（= C++ 虚表），运行时多态
-- **依赖注入**：Bsp_Init() 中 g_board_hw_bsp_ = &g_stm32f4_bsp_
+- **平台工厂装配（组合根在 BSP 层）**：bsp_interface.c 编译期用宏选 g_stm32f4_bsp_，赋值给抽象指针 g_board_hw_bsp_；组合根下沉在 BSP 层以隔离平台改动
 
 ## 外设驱动状态
 

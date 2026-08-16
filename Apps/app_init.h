@@ -4,8 +4,6 @@
 /* FreeRTOS头文件 */
 #include "FreeRTOS.h"
 #include "task.h"
-#include "queue.h"
-#include "semphr.h"
 
 /* 任务头文件 */
 #include "led_status_app.h"

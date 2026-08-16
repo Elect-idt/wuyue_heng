@@ -1,8 +1,6 @@
 #ifndef __BSP_INTERFACE_H_
 #define __BSP_INTERFACE_H_
 
-#include <stdio.h>
-
 // 公共接口
 #include "bsp_common_def.h"
 #include "bsp_gpio_interface.h"

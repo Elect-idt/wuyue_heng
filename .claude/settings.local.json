@@ -12,7 +12,17 @@
       "Bash(cp \"C:/Users/Administrator/.claude/projects/j--ArmsApprentice-wuyue-heng-2-software-wuyue-heng/memory/reference-ccmram-vs-sram.md\" memory/)",
       "Bash(cp \"J:/ArmsApprentice/wuyue_heng/2.software/wuyue_heng/.claude/cmake-linking-knowledge.md\" \"J:/ArmsApprentice/wuyue_heng/2.software/wuyue_heng/.claude/memory/reference-cmake-linking.md\" && \\\\ *)",
       "Bash(cmake --build . -- -j16)",
-      "Bash(arm-none-eabi-nm -n wuyue_heng.elf)"
+      "Bash(arm-none-eabi-nm -n wuyue_heng.elf)",
+      "Bash(grep -iE \"_estack|__?sdata|_edata|_sbss|_ebss|_sidata|^.* _end$\")",
+      "Bash(arm-none-eabi-size wuyue_heng.elf)",
+      "Bash(arm-none-eabi-objdump -d wuyue_heng.elf)",
+      "Bash(arm-none-eabi-nm Apps/CMakeFiles/app_task_lib.dir/key_scan_app/key_scan_app.c.obj)",
+      "Bash(arm-none-eabi-nm Bsp/CMakeFiles/Bsp_Interface.dir/bsp_interface.c.obj)",
+      "Bash(arm-none-eabi-ar t *)",
+      "Bash(ls \"C:\\\\Users\\\\Administrator\\\\.claude\\\\projects\\\\C--Users-Administrator\\\\memory\" 2>/dev/null; echo ===; ls \"C:\\\\Users\\\\Administrator\\\\.claude\" | head -15; echo ===; ls \"C:\\\\Users\\\\Administrator\\\\.claude\\\\projects\\\\j--ArmsApprentice-wuyue-heng-2-software-wuyue-heng\" | head)",
+      "Read(//c/Users/Administrator/.claude/**)",
+      "Bash(cd \"J:\\\\ArmsApprentice\\\\wuyue_heng\\\\2.software\\\\wuyue_heng\" && grep -n \"SystemInit\" Drivers/STM32F4_SPL/CMSIS/Device/ST/STM32F4xx/Source/gcc_ride7/startup_stm32f40_41xxx.s | head -3 && grep -rn \"Drivers/CMakeLists\" -l /dev/null; cat Drivers/CMakeLists.txt | head -60)",
+      "Read(//dev/**)"
     ],
     "additionalDirectories": [
       "J:\\ArmsApprentice\\wuyue_heng\\2.software\\wuyue_heng\\.claude"

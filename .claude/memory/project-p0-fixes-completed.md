@@ -1,61 +1,80 @@
 ---
 name: project-p0-fixes-completed
-description: 2026-06-09/10 P0+P1+P2 修复完成，P3 待办，详细修复清单在 doc/architecture-fix-plan-20260609.md
+description: 2026-06-09/10 P0~P2 修复完成；2026-08-16 P3 全部收尾，详细清单在 doc/architecture-fix-plan-20260609.md
 metadata: 
   node_type: memory
   type: project
   originSessionId: 19eb04a2-f6aa-4be0-a562-ef941e55d7fa
 ---
 
-# 修复进度（截至 2026-06-10）
+# 修复进度（截至 2026-08-16，P0~P3 全部完成）
 
-## 已完成
+## P0~P2（2026-06-09/10 完成）
+- P0 全部、P1 除 FIX-08（用户跳过）、P2 大部分：见 `doc/architecture-fix-plan-20260609.md`
 
-### P0（6 条，全部完成）
-- FIX-01~06: 见 `doc/architecture-fix-plan-20260609.md`
+## P3（2026-08-16 收尾）
+- FIX-27: 已确认 bsp_systick.c 无 u8/u16/u32 残留（无需改）
+- FIX-28: HardFault 打印 HFSR/CFSR/MMFAR/BFAR/LR（已完成）
+- FIX-29: FreeRTOS 堆 48KB 放 CCMRAM（commit 86a8562）
+- FIX-30: 链接脚本 /DISCARD/ 已移除（.ld 内有注释说明）
+- FIX-31: L1~L7、L9、L11 已完成；L8 接受现状（GPIO_TOGGLE 留在状态枚举）；
+  L10（log 层）、L12（hc165_init 7 参数重构）有意推迟
+- L3: 任务优先级宏移入 key_scan_app.h / led_status_app.h，app_init.c 引用宏
+- L5: 任务头文件瘦身（删 queue.h/semphr.h/bsp_interface.h，.c 自行 include）
+- L6: 全部 CMakeLists 弃用 aux_source_directory，显式列源文件
+- L7: usart_send_string/send_array 参数加 const
+- L9: led_init/hc165_init 返回 bsp_status_e，调用方 configASSERT
 
-### P1（完成 6 条，跳过 1 条）
-- FIX-07: SPI DMA wait 超时 + ISR DMA 错误处理 + cleanup 关中断使能 + DMA停止等待超时
-- FIX-08: USART 超时保护 → **用户决定跳过**（波特率不确定）
-- FIX-09~14: 见 `doc/architecture-fix-plan-20260609.md`
+## 硬件相关（未提交/待硬件确认）
+- key_scan_app.c 有 Q7\(反相)错接补偿（奇数索引取反），板子改 Q7->SER 接线后应删除
+- KEY_ACTIVE_LEVEL_BITMAP：chip1 active-high，chip0/2 active-low
+- doc/硬件待修改.txt 记录硬件待改事项
 
-### P2（完成 6 条，跳过 2 条）
-- FIX-15: USART 配置表重构（`usart_hw_config_t`，`base_clk_cmd` 函数指针放描述符）→ 480 行→230 行
-- FIX-19: 拼写错误全局修正（`uasrt`→`usart`、`SACN`→`SCAN`）sed 批量
-- FIX-20: `bsp_status_e` 枚举连续编号（TIME_OUT 4→3）
-- FIX-21: 已完成（const 修复）
-- FIX-22: ISR 三个 FreeRTOS handler 注释合并统一说明
-- FIX-23: SysTick Doxygen 注释修正
-- FIX-26: 任务创建移除临界区（调度器未启动不需要）
-- FIX-24: **跳过**（保留 FreeRTOSConfig.h 的 `#include <stdio.h>`）
-- FIX-25: **跳过**（堆保持 20KB，暂不调到 32KB）
-- FIX-18: ISR handler 封装 + stm32f4xx_it.c/h 移至 `Bsp/stm32f4/isr/`（P1 阶段提前做）
+## 2026-08-16 Opus 复审 + P1 修复（同日完成）
+- Opus 全局架构复审结论：健康度 8/10，无 P0，技术债集中在错误路径/扩展路径
+- P1 已全部修复：
+  - P1-1: configASSERT -> 真函数 vAssertCalled（app_hooks.c），打印后关中断停车；
+    FreeRTOSConfig.h 不再 include stdio.h
+  - P1-2: SPI DMA 使能 TE 中断（DMA_IT_TC|DMA_IT_TE），cleanup 对称关闭+清标志，
+    KEY_SCAN_SPI_RX_DMA_IT_TE 宏进 bsp_spi.h
+  - P1-3: DMA 超时 -> cleanup **之后**排空信号量陈旧令牌（关键：cleanup 前排空
+    关不死竞态窗口，用户指出后修正方案）
+  - P1-4: g_spi_dma_sync_ptr 单例 -> s_spi_dma_sync_ptrs[SPI_ID_MAX] 按 id 索引；
+    bsp_spi_dma_isr_handler(spi_id_e id) 带 id 路由；Bsp_ISR 链接 bsp_common_interface
+  - P1-5: USART 4 处忙等加 USART_TIME_OUT（bsp_usart.h），inner send_byte 检查返回值
+  - P2-9: app_common_def.h 的 FromISR 优先级注释纠错（正确规则：NVIC 数值 0~4
+    禁止调 FromISR，DMA 中断 6 合法）
+  - P2-10: 核实为误报（Core/src 实际就是小写，Linux 构建无碍）
+- P2 待办（2026-08-16 已做 P2-6/7/8，仅剩 P2-11 用户考虑中）：
+  - P2-6+7 已完成：bsp_spi.c V3.0 重构为 spi_hw_config_t 配置描述符表
+    （照 FIX-15 USART 模式），7 处 switch-case 收敛为查表；方向校验死代码删除
+    （stm32f4_spi_base_config 数组一并移除）。新增 SPI 设备三步：bsp_spi.h 加宏
+    + s_spi_cfg[] 加一行 + isr 路由加一条
+  - P2-8 已完成：usart_ops_t 加 usart_receive_byte（轮询+超时）；协议级 RX
+    （IDLE+DMA + rx_notify 注入，照 spi_dma_sync_t 模式）已在接口头注释占位，
+    蓝牙/指纹协议开发时实现
+  - P2-11 已完成（2026-08-16）：hc165 + led 统一改"预填描述符"构造
+    （C99 指定初始化器预填 struct，init 只做校验+硬件 init）；bsp_lock_t
+    事务互斥类型已落 Bsp/common，hc165_t.lock 字段就位（当前 NULL，出现
+    第二个总线消费者时 Apps 创建互斥量注入同一实例即可）；hc165_read/
+    read_polling 已包事务锁（无锁时零开销直通）。惯例已写入 CLAUDE.md
+    （含"出现运行时状态升级为 cfg 结构体"的判据）
+  - **Opus 审查清单至此全部清零（P0~P3 + P1 + P2 全部完成）**
+- 同 SPI 多任务互斥设计已定（用户确认方向）：Apps 创建互斥量 -> 注入 Component
+  （hc165_t 加 mutex 字段包住整个器件事务），BSP 不掺和；等出现第二个消费者时实现
 
-### 未做（FIX-16/17，SPI 只有 1 设备，价值低）
-- FIX-16: SPI 配置表（`spi_hw_config_t`）— 仅 1 个 SPI 设备，暂不做
-- FIX-17: SPI DMA 多设备数组 — 仅 1 个 SPI 设备，暂不做
+## 2026-08-16 会话补充（P3 收尾后的结构调整）
+- 新建 `Apps/common/`：`app_common_def.h`（任务优先级集中定义，对应 bsp_common_def.h 命名）
+  + `app_hooks.c`（FreeRTOS 应用钩子统一放这，勿散落到任务文件）
+- `vApplicationStackOverflowHook` 从 app_init.c 移到 app_hooks.c
+  -> 触发归档提取时机陷阱，用 `App_Hooks` OBJECT 库注入 elf 解决
+  （详见 reference-cmake-linking.md 的实战记录）
+- 任务头文件已瘦身为纯函数声明；.c 自行 include FreeRTOS/bsp 头
+- 新增任务时：优先级登记到 app_common_def.h；新钩子加到 app_hooks.c；
+  源文件手动加进 Apps/CMakeLists.txt 的 App_Task_Src
 
-## 待修复（P3）
+## 编译状态（2026-08-16，P1+P2-6/7/8 修复后）
+- 零错误零警告，Flash: 33008 B (6.30%)，RAM: 3272 B (2.50%)，CCMRAM: 48KB/64KB（堆）
 
-详细代码方案见: `doc/architecture-fix-plan-20260609.md`
-- FIX-27: 类型统一 `u8`/`u16`/`u32` → `uint8_t`/`uint16_t`/`uint32_t`（仅 bsp_systick.c）
-- FIX-28: HardFault Handler 加调试信息打印
-- FIX-29: CCMRAM 64KB 利用（FreeRTOS 堆放 CCMRAM）
-- FIX-30: 链接脚本 discard 段审查
-- FIX-31: 零散编码风格（L1~L12 见文档）
-
-## 编译状态
-- 零错误零警告，Flash: 31384 B (5.99%), RAM: 23768 B (18.13%)
-
-## 关键设计决策
-- **USART 重构模式**: `usart_hw_config_t` 配置表 + `base_clk_cmd` 函数指针（APB1/APB2 统一）。新增外设可套用此模式（SPI 暂不需要）
-- **SysTick 延时替代**: 用 TIM 基础定时器（非 DWT），用户明确选择
-- **USART 超时**: 不加，用户认为波特率不确定时超时值难选
-- **ISR 目录隔离**: `stm32f4xx_it.c/h` 在 `Bsp/stm32f4/isr/`，只依赖 StdPeriph_Driver
-- **栈溢出检测**: configCHECK_FOR_STACK_OVERFLOW=2，hook 里 printf 任务名（注意 printf 本身耗栈）
-
-## 下一步
-下次说"继续 P3 修复"，读此 memory + `doc/architecture-fix-plan-20260609.md` 从 FIX-27 开始。
-
-## Why: 确保下次对话直接知道修复进度和下一步。
-## How to apply: 下次会话说"继续 P3 修复"开始。
+## Why: 确保下次对话直接知道修复进度，避免重复检查。
+## How to apply: 架构修复计划已全部收尾，后续按新需求开发即可。

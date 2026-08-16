@@ -5,6 +5,10 @@
 #include "stm32f4xx.h"
 #include "bsp_usart_interface.h"
 
+/* 忙等超时保护（与 SPI_TIME_OUT 对称）：外设异常（时钟/引脚配置错、总线错误）
+ * 时避免任务死锁在 while 等待里，保住 printf 诊断通道不僵死 */
+#define USART_TIME_OUT  ((uint32_t)0x1000)
+
 /******  DEBUG_USART_TX引脚时钟端口、引脚宏定义 ******/
 #define DEBUG_USART_GPIO_CLK_CMD  RCC_AHB1PeriphClockCmd
 #define DEBUG_USART_TX_CLK        RCC_AHB1Periph_GPIOC

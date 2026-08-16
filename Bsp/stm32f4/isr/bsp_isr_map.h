@@ -21,8 +21,8 @@
  ******************************************************************************
  */
 
-/* SPI 键盘扫描（SPI2）：RX = DMA1_Stream3，TX = DMA1_Stream4 */
+/* SPI 键盘扫描（SPI2）：仅 RX DMA 开中断（DMA1_Stream3）。
+ * TX DMA 不开中断——全双工下 RX 收完即代表 TX 也发完，用 RX TC 通知即可。 */
 #define KEY_SCAN_SPI_RX_DMA_IRQHandler     DMA1_Stream3_IRQHandler
-#define KEY_SCAN_SPI_TX_DMA_IRQHandler     DMA1_Stream4_IRQHandler
 
 #endif /* __BSP_ISR_MAP_H_ */

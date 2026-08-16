@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./run.sh)",
+      "Bash(git -C .claude/worktrees/agent-a9463124df52cb368 status --short)",
+      "Bash(git -C .claude/worktrees/agent-a9463124df52cb368 log --oneline -1)",
+      "Bash(git worktree *)",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(cd \"J:\\\\ArmsApprentice\\\\wuyue_heng\\\\2.software\\\\wuyue_heng\\\\.claude\\\\memory\" && sed -i 's|- \\\\[project-p0-fixes-completed.md\\\\]\\(project-p0-fixes-completed.md\\) - P0~P3 修复进度，详细方案在 `doc/architecture-fix-plan-20260609.md`|- [project-p0-fixes-completed.md]\\(project-p0-fixes-completed.md\\) - P0~P3 全部完成（2026-08-16 收尾）；含硬件待办（Q7 错接补偿、active level 位图）|' MEMORY.md && cat MEMORY.md | tail -4)"
+    ],
+    "additionalDirectories": [
+      "J:\\ArmsApprentice\\wuyue_heng\\2.software\\wuyue_heng\\.claude\\memory"
+    ]
+  }
+}

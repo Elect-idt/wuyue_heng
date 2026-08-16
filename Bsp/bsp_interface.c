@@ -1,10 +1,10 @@
 /**
  ******************************************************************************
- * @file    bsp_init.c
+ * @file    bsp_interface.c
  * @author  Pan
  * @version V1.0
  * @date    2025-07-28
- * @brief   bsp_Init
+ * @brief   BSP 平台工厂 + 初始化调度（Bsp_Init）
  ******************************************************************************
  * @attention
  *
@@ -14,13 +14,16 @@
  */
 
 #include "bsp_interface.h"
+#include <stddef.h>     /* NULL */
 
 // 全局单例对象实例化
 const board_hw_bsp_t* g_board_hw_bsp_ = NULL;
 
-// 根据目标平台选择对应的板级BSP描述符，实现平台切换
-// [C++对照] 类似于依赖注入：将具体工厂的引用赋给抽象工厂指针，即 Base* ptr = new Derived()
-// 此处只包含具体的驱动声明，只声明变量，不包含硬件头文件
+// 平台工厂：编译期通过宏选择具体平台描述符，绑定到抽象全局指针 g_board_hw_bsp_
+// 后续新增平台（如 GD32/H7）在此加 #elif 宏隔离即可，Apps/Component/Core 无需改动
+// 注意：此处只 extern 声明平台描述符变量，不 include 任何平台头文件
+//       ——"头文件级平台无关"（CMake 编译隔离强制保证），但"符号级平台感知"（工厂职责所在）
+// [C++对照] 编译期抽象工厂：抽象指针 g_board_hw_bsp_ 指向宏选定的具体工厂实例 g_stm32f4_bsp_
 #if defined(STM32F4)
 extern const board_hw_bsp_t g_stm32f4_bsp_;
 #define BSP_DRIVER_INTERFACE g_stm32f4_bsp_

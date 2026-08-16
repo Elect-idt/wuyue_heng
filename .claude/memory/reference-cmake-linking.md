@@ -70,6 +70,34 @@ OBJECT 库没有 .a 文件，所以 PUBLIC 只传播头文件路径，不传播 
 - .o 文件无条件全量读入
 - .a 文件惰性拉入：只有当 .o 能满足当前未解析符号时才拉入
 
+## FreeRTOS 应用钩子的归档提取时机陷阱（实战 2026-08-16）
+
+**现象**：`vApplicationStackOverflowHook` 从 app_init.c 移到独立的 app_hooks.c
+（同在 libapp_task_lib.a）后，链接报 undefined reference。
+
+**机理**（比"弱符号不提取"更隐蔽的一类归档陷阱）：
+链接器扫描 .a 时，只为"**当前已未定义**"的符号提取 .o。时间线：
+1. main.o 引用 AppTaskCreate -> 扫描 libapp_task_lib.a 时提取 app_init.o；
+2. app_init.o 引用 xTaskCreate，但**此时没人引用钩子**（tasks.o 还没被提取）
+   -> app_hooks.o 留在归档里不提取；
+3. 后面的 libFreeRTOS_Lib.a 因 xTaskCreate 提取 tasks.o，它引用钩子
+   -> 之后没有归档能提供 -> undefined。
+
+**以前为什么能链接上**：钩子定义在 app_init.o 里，提取 app_init.o（为
+AppTaskCreate）时顺带带出钩子定义--**隐蔽的位置耦合**，挪走就断。
+
+**解法**（同 Bsp_ISR 模式）：OBJECT 库注入最终 elf，.o 无条件上链接命令行：
+```cmake
+add_library(App_Hooks OBJECT)
+target_sources(App_Hooks PRIVATE Apps/common/app_hooks.c)
+target_link_libraries(App_Hooks PRIVATE freertos_interface)
+# 根 CMakeLists：$<TARGET_OBJECTS:App_Hooks> 加入 add_executable 的 sources
+```
+
+**普适判据**：凡是"被库 B 引用、定义在库 A、而 A 的提取时机早于 B"的回调
+（FreeRTOS 钩子、驱动回调表、注册函数），都不能依赖 STATIC 归档扫描，
+要么放会被无条件提取的 .o，要么用 OBJECT 库注入。
+
 ## 链接器扫描 .a 的行为
 ```
 同一个 .a 内：

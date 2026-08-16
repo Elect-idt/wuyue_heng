@@ -70,8 +70,6 @@
 #ifndef FREERTOS_CONFIG_H
 #define FREERTOS_CONFIG_H
 
-#include <stdio.h>
-
 
 //针对不同的编译器调用不同的stdint.h文件
 #if defined(__ICCARM__) || defined(__CC_ARM) || defined(__GNUC__)
@@ -79,8 +77,9 @@
     extern uint32_t SystemCoreClock;
 #endif
 
-//断言
-#define vAssertCalled(char,int) printf("Error:%s,%d\r\n",char,int)
+//断言：失败时打印文件行号并停车（实现见 Apps/common/app_hooks.c，循环等死）
+//不在宏里直接 printf：这样本文件无需 include <stdio.h>，内核头保持干净
+extern void vAssertCalled(const char* file, int line);
 #define configASSERT(x) do { if((x)==0) vAssertCalled(__FILE__,__LINE__); } while(0)
 
 /************************************************************************

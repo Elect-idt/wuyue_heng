@@ -11,9 +11,11 @@ cmake_minimum_required(VERSION 3.22)
 
 add_library(component_lib STATIC)
 
-# 源文件
-aux_source_directory(${CMAKE_SOURCE_DIR}/Component/led Component_Src)
-aux_source_directory(${CMAKE_SOURCE_DIR}/Component/74hc165 Component_Src)
+# 源文件（显式列出，新增器件需手动添加）
+set(Component_Src
+    ${CMAKE_SOURCE_DIR}/Component/led/led.c
+    ${CMAKE_SOURCE_DIR}/Component/74hc165/74hc165.c
+)
 target_sources(component_lib PRIVATE ${Component_Src})
 
 # 头文件路径（PUBLIC：Apps 包含头文件时能找到）

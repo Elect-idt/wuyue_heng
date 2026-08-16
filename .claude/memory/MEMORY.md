@@ -8,4 +8,4 @@
 - [reference-ccmram-vs-sram.md](reference-ccmram-vs-sram.md) — CCMRAM vs SRAM：CCMRAM 是 CPU 私有内存 DMA 够不着；启用时机与用法（用到才查）
 
 ## 项目进度
-- [project-p0-fixes-completed.md](project-p0-fixes-completed.md) — P0~P3 修复进度，详细方案在 `doc/architecture-fix-plan-20260609.md`
+- [project-p0-fixes-completed.md](project-p0-fixes-completed.md) - 审查清单全部清零（P0~P3+P1+P2，2026-08-16）；含硬件待办（Q7 错接补偿、active level 位图）与新器件开发惯例入口

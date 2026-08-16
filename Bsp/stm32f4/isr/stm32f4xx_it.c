@@ -26,9 +26,10 @@
 #include "bsp_isr_map.h"    /* KEY_SCAN_SPI_RX_DMA_IRQHandler → DMA1_Stream3_IRQHandler 路由映射 */
 #include <stdio.h>
 #include <inttypes.h>
+#include "bsp_spi_interface.h" /* spi_id_e（按 id 路由到对应驱动的 DMA ISR handler）*/
 
 /* SPI DMA ISR handler — 硬件细节封装在 bsp_spi.c 中 */
-extern void bsp_spi_dma_isr_handler(void);
+extern void bsp_spi_dma_isr_handler(spi_id_e id);
 
 /** @addtogroup Template_Project
  * @{
@@ -159,7 +160,7 @@ void DebugMon_Handler(void) {}
  */
 void KEY_SCAN_SPI_RX_DMA_IRQHandler(void)
 {
-    bsp_spi_dma_isr_handler();
+    bsp_spi_dma_isr_handler(SPI_ID_KEY_SCAN);
 }
 
 /**

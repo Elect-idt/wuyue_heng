@@ -10,20 +10,35 @@
 # =====================================================================
 cmake_minimum_required(VERSION 3.22)
 
-# App 任务源文件
+# App 任务源文件（显式列出，新增任务需手动添加）
 set(App_Task_Src
-    ${CMAKE_SOURCE_DIR}/Apps/app_init.c   # 应用初始化（创建 FreeRTOS 任务）
+    ${CMAKE_SOURCE_DIR}/Apps/app_init.c                 # 应用初始化（创建 FreeRTOS 任务）
+    ${CMAKE_SOURCE_DIR}/Apps/led_status_app/led_status_app.c    # LED 状态任务
+    ${CMAKE_SOURCE_DIR}/Apps/key_scan_app/key_scan_app.c        # 按键扫描任务
 )
-# LED 状态任务
-aux_source_directory(${CMAKE_SOURCE_DIR}/Apps/led_status_app App_Task_Src)
-# 按键扫描任务
-aux_source_directory(${CMAKE_SOURCE_DIR}/Apps/key_scan_app App_Task_Src)
+
+# =====================================================================
+# FreeRTOS 应用钩子（OBJECT 库，直接注入可执行文件）
+# 必须直接链接，不能放进 STATIC 库！归档提取时机陷阱：
+#   链接器扫描 libapp_task_lib.a 时，只为"当前已未定义"的符号提取 .o。
+#   此时 tasks.o（引用 vApplicationStackOverflowHook）还没被提取，
+#   app_hooks.o 不会被拉出；等 tasks.o 因 xTaskCreate 被提取时，
+#   已没有后续归档能提供钩子 -> undefined reference。
+# （钩子曾定义在 app_init.c 里恰好能链接上：提取 app_init.o 时顺带带出钩子，
+#   属于隐蔽的位置耦合，故移出后必须用 OBJECT 库注入，同 Bsp_ISR 模式。）
+# =====================================================================
+add_library(App_Hooks OBJECT)
+target_sources(App_Hooks PRIVATE
+    ${CMAKE_SOURCE_DIR}/Apps/common/app_hooks.c
+)
+target_link_libraries(App_Hooks PRIVATE freertos_interface)
 
 # Apps 头文件路径（INTERFACE：传播给链接 app_task_lib 的 target）
 add_library(app_task_interface INTERFACE)
 
 target_include_directories(app_task_interface INTERFACE
     ${CMAKE_SOURCE_DIR}/Apps                     # app_init.h 等公共头文件
+    ${CMAKE_SOURCE_DIR}/Apps/common              # app_common_def.h（任务优先级等公共配置）
     ${CMAKE_SOURCE_DIR}/Apps/led_status_app       # LED 任务头文件
     ${CMAKE_SOURCE_DIR}/Apps/key_scan_app         # 按键扫描任务头文件
 )

@@ -1,11 +1,14 @@
 #include "led.h"
+#include <stddef.h>
 
-void led_init(led_t *led, const gpio_ops_t *ops, gpio_pin_e pin, bool active_low)
+bsp_status_e led_init(led_t *led)
 {
-    led->gpio_ops   = ops;
-    led->pin        = pin;
-    led->active_low = active_low;
-    ops->init(pin); /* RAII: 初始化指定 GPIO 引脚 */
+    /* 校验预填字段：漏填在这里拦截，而不是变成硬件层的怪错误 */
+    if (led == NULL || led->gpio_ops == NULL)
+    {
+        return BSP_STAT_INVALID_PARAMS;
+    }
+    return led->gpio_ops->init(led->pin); /* RAII: 初始化指定 GPIO 引脚 */
 }
 
 void led_on(led_t *led)

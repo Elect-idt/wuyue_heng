@@ -46,6 +46,7 @@
 #define KEY_SCAN_SPI_RX_DMA_STREAM         DMA1_Stream3
 #define KEY_SCAN_SPI_RX_DMA_IRQn           DMA1_Stream3_IRQn
 #define KEY_SCAN_SPI_RX_DMA_IT_TC          DMA_IT_TCIF3
+#define KEY_SCAN_SPI_RX_DMA_IT_TE          DMA_IT_TEIF3
 
 /****** KEY_SCAN_SPI TX DMA配置（全双工DMA接收时发送dummy字节产生时钟） ******/
 #define KEY_SCAN_SPI_TX_DMA_STREAM         DMA1_Stream4

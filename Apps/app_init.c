@@ -14,6 +14,7 @@
  */
 
 #include "app_init.h"
+#include "app_common_def.h"
 #include "bsp_interface.h"
 #include <stdio.h>
 
@@ -37,7 +38,7 @@ int32_t AppTaskCreate(void)
 
     /* ①创建按键扫描任务（高优先级，10ms周期） */
     xReturn = xTaskCreate((TaskFunction_t)Key_Scan_Task, (const char*)"Key_Scan_Task", (uint16_t)256, (void*)NULL,
-                          (UBaseType_t)4, (TaskHandle_t*)NULL);
+                          (UBaseType_t)KEY_SCAN_TASK_PRI, (TaskHandle_t*)NULL);
     if (pdPASS != xReturn)
     {
         status = APP_TASK_FAIL;
@@ -45,7 +46,7 @@ int32_t AppTaskCreate(void)
 
     /* ②创建LED状态任务 */
     xReturn = xTaskCreate((TaskFunction_t)Led_Status_Task, (const char*)"Led_Status_Task", (uint16_t)256, (void*)NULL,
-                          (UBaseType_t)2, (TaskHandle_t*)NULL);
+                          (UBaseType_t)LED_STATUS_TASK_PRI, (TaskHandle_t*)NULL);
     if (pdPASS != xReturn)
     {
         status = APP_TASK_FAIL;
@@ -58,16 +59,5 @@ int32_t AppTaskCreate(void)
     return status;
 }
 
-/**
- * @brief  FreeRTOS 栈溢出检测回调（configCHECK_FOR_STACK_OVERFLOW = 2 时需要）
- * @param  xTask: 溢出任务句柄
- * @param  pcTaskName: 溢出任务名称
- */
-void vApplicationStackOverflowHook(TaskHandle_t xTask, char* pcTaskName)
-{
-    (void)xTask;
-    printf("STACK OVERFLOW: %s\r\n", pcTaskName);
-    while (1)
-    {
-    }
-}
+/* vApplicationStackOverflowHook 已移至 Apps/common/app_hooks.c
+ *（FreeRTOS 钩子统一放那里，不与任务创建逻辑混放）*/

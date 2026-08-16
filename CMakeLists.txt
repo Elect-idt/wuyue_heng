@@ -63,6 +63,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/Core/src/syscalls.c        # 系统调用重定向（printf → USART）
     ${CMAKE_SOURCE_DIR}/Core/src/sysmem.c          # 堆内存管理
     $<TARGET_OBJECTS:Bsp_ISR>                      # ISR handlers（直接链接，覆盖启动文件弱符号）
+    $<TARGET_OBJECTS:App_Hooks>                    # FreeRTOS 应用钩子（直接链接，规避归档提取时机陷阱）
 )
 
 # Core 头文件路径
