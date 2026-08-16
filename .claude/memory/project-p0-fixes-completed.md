@@ -1,6 +1,6 @@
 ---
 name: project-p0-fixes-completed
-description: 2026-06-09/10 P0~P2 修复完成；2026-08-16 P3 全部收尾，详细清单在 doc/architecture-fix-plan-20260609.md
+description: 2026-08-16 审查清单全部清零（P0~P3+P1+P2），框架就绪待新驱动开发；硬件待办（Q7'补偿等）
 metadata: 
   node_type: memory
   type: project
@@ -73,8 +73,23 @@ metadata:
 - 新增任务时：优先级登记到 app_common_def.h；新钩子加到 app_hooks.c；
   源文件手动加进 Apps/CMakeLists.txt 的 App_Task_Src
 
-## 编译状态（2026-08-16，P1+P2-6/7/8 修复后）
-- 零错误零警告，Flash: 33008 B (6.30%)，RAM: 3272 B (2.50%)，CCMRAM: 48KB/64KB（堆）
+## 编译状态（2026-08-16 终版，P2-11 后）
+- 零错误零警告，Flash: 33272 B (6.35%)，RAM: 3280 B (2.50%)，CCMRAM: 48KB/64KB（堆）
+
+## 会话零散决策（2026-08-16，已固化到代码注释/CLAUDE.md，此处仅索引）
+- 74HC165 PL 低电平 80ns 规格：间接调用开销(150~600ns)裕量充足，不加延时；
+  失效条件（改直接 BSRR 写/换平台）已注释在 74hc165.c
+- GPIO/DMA 时钟使能故意不进 spi_hw_config_t：F4 全家族焊死 AHB1 无设备差异，
+  配置表只放"随设备变"的字段；SPI 本体 APB1/APB2 差异已由 base_clk_cmd 覆盖
+
+## 下一步（2026-08-17 起）
+1. 用户提交本版（commit message 已生成）
+2. 硬件验证按键读数：确认 Q7' 补偿方向和 KEY_ACTIVE_LEVEL_BITMAP 配置；
+   板子改 Q7->SER 接线后删除 hc165_raw_to_keys 的补偿步（代码有 TODO 注释）
+3. 小模型开发新驱动（LCD/蓝牙等）：框架已备好——SPI/USART 配置表模式、
+   Component 预填描述符惯例、CLAUDE.md 成文约定，照 bsp_spi.c/74hc165.h 抄即可
+4. 触发式待办：新 SPI 设备进场用三步接入法（见 bsp_spi.c 头注释）；
+   usart 协议级 RX（IDLE+DMA+rx_notify 注入）在蓝牙/指纹开发时实现
 
 ## Why: 确保下次对话直接知道修复进度，避免重复检查。
-## How to apply: 架构修复计划已全部收尾，后续按新需求开发即可。
+## How to apply: 审查修复全部完成；下次会话从"下一步"清单或新需求继续。
