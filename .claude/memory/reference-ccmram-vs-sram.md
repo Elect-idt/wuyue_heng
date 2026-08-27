@@ -50,4 +50,4 @@ static uint8_t ucHeap[configTOTAL_HEAP_SIZE] __attribute__((section(".ccmram")))
 ## 关联
 - 用户决定 FIX-29 暂不启用 CCMRAM（2026-06-10）
 - 链接脚本位置：`STM32F405RGT6_FLASH.ld`
-- DMA 同步机制见 [[project-p0-fixes-completed]]
+- DMA 同步机制见 [[project-status]]

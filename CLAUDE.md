@@ -27,9 +27,8 @@ wuyue_heng/
 ├── Apps/                   ← 应用层（LED任务、按键扫描任务）
 ├── Core/src/               ← main.c, syscalls.c, sysmem.c（平台无关）
 └── doc/
-    ├── bsp-architecture-summary.md  ← BSP架构设计详解
-    ├── component-architecture.md    ← Component层架构设计
-    └── cpp-vs-c-oop-pattern.md      ← C实现C++面向对象模式对照
+    ├── project/                ← 项目文档（评审/修复计划/调试记录/硬件待办）
+    └── knowledge/              ← 通用知识文档（换项目仍成立的对照/机制讲解）
 ```
 
 ## CMake target 架构（关键！）
@@ -110,6 +109,13 @@ app_task_lib (STATIC)            ← 链接 Bsp_Driver + component_lib + FreeRTO
 - `configCHECK_FOR_STACK_OVERFLOW` = 2，`vApplicationStackOverflowHook` 和 `vAssertCalled`（断言停车）在 `Apps/common/app_hooks.c`
 
 ## 详细知识文档
-- `doc/bsp-architecture-summary.md` — BSP架构设计详解
-- `doc/component-architecture.md` — Component层架构设计
-- `doc/cpp-vs-c-oop-pattern.md` — C实现C++面向对象模式对照（vtable、抽象工厂、虚函数）
+### 项目文档（doc/project/）
+- `bsp-architecture-summary.md` — BSP架构设计详解
+- `component-architecture.md` — Component层架构设计
+- `architecture-fix-plan-20260609.md` — P0~P3 修复计划与验收
+- `硬件待修改.txt` — 硬件待改事项（Q7→SER 接线等）
+
+### 通用知识文档（doc/knowledge/，换项目仍成立）
+- `cpp-vs-c-oop-pattern.md` — C实现C++面向对象模式入门对照（vtable、抽象工厂、虚函数）
+- `c-oop-static-vs-dynamic.md` — 进阶：ops_t静态注册表 vs 虚表/实例分离动态工厂、多实例组件模板（keypad_dev_t）、vptr脱糖与对象内存布局
+- `cpp-build-link-relocation-notes.md` — 编译/链接/重定位机制笔记

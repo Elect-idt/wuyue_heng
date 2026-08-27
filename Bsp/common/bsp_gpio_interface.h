@@ -22,6 +22,7 @@ typedef enum
 } gpio_state_e;
 
 // GPIO 外设驱动接口，定义 GPIO 的统一操作方法，不同平台实现各自的驱动实例
+// 可以理解为这个就是纯虚类，也是基类
 typedef struct
 {
     const char *name;

@@ -26,20 +26,20 @@ static bsp_status_e stm32f4_gpio_init(gpio_pin_e pin)
     {
     case GPIO_PIN_LED_STATUS:
         RCC_AHB1PeriphClockCmd(LED_R_CLK, ENABLE);
-        GPIO_InitStructure.GPIO_Pin   = LED_R_PIN;
-        GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_OUT;
+        GPIO_InitStructure.GPIO_Pin = LED_R_PIN;
+        GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
         GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-        GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_UP;
+        GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
         GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
         GPIO_Init(LED_R_PORT, &GPIO_InitStructure);
         GPIO_SetBits(LED_R_PORT, LED_R_PIN); /* 默认熄灭（低有效） */
         break;
     case GPIO_PIN_HC165_PL:
         RCC_AHB1PeriphClockCmd(HC165_PL_CLK, ENABLE);
-        GPIO_InitStructure.GPIO_Pin   = HC165_PL_PIN;
-        GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_OUT;
+        GPIO_InitStructure.GPIO_Pin = HC165_PL_PIN;
+        GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
         GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-        GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_UP;
+        GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
         GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
         GPIO_Init(HC165_PL_PORT, &GPIO_InitStructure);
         GPIO_SetBits(HC165_PL_PORT, HC165_PL_PIN); /* 默认 HIGH（移位模式） */
@@ -84,8 +84,9 @@ static bsp_status_e stm32f4_gpio_write(gpio_pin_e pin, gpio_state_e state)
 }
 
 // STM32F4 平台 GPIO 驱动实例
+// 这个就是派生类，声明+定义
 const gpio_ops_t g_stm32f4_gpio_driver_ = {
-    .name  = "STM32F4_GPIO_DRIVER",
-    .init  = stm32f4_gpio_init,
+    .name = "STM32F4_GPIO_DRIVER",
+    .init = stm32f4_gpio_init,
     .write = stm32f4_gpio_write,
 };

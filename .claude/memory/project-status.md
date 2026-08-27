@@ -1,5 +1,5 @@
 ---
-name: project-p0-fixes-completed
+name: project-status
 description: 2026-08-16 审查清单全部清零（P0~P3+P1+P2），框架就绪待新驱动开发；硬件待办（Q7'补偿等）
 metadata: 
   node_type: memory
@@ -7,10 +7,30 @@ metadata:
   originSessionId: 19eb04a2-f6aa-4be0-a562-ef941e55d7fa
 ---
 
-# 修复进度（截至 2026-08-16，P0~P3 全部完成）
+# wuyue_heng 项目状态（新会话从这里开始）
+
+## 当前状态快照（2026-08-16 收工）
+- **代码**：全绿编译（零错误零警告，Flash 6.35%），最新提交 4e1d677 已推送 GitHub
+- **硬件验证**：⚠ 仅旧版按键扫描上板跑通过；**2026-08-16 的全部重构
+  （SPI V3.0 配置表、P1/P2 修复、预填描述符）只过了编译，未上板**。
+  继续开发前建议先烧录验证按键读数正常（见"下一步"第 2 条）
+- **架构**：审查清单全部清零（P0~P3+P1+P2），框架进入可复制扩展状态
+- 本文件是进度+决策中枢；架构规则看 CLAUDE.md（自动加载）；
+  CMake/CCMRAM 深层知识看本目录两个 reference 文件
+
+## 新器件/驱动开发 SOP（入口指针，详细规则以源头为准）
+1. 架构约定与惯例 → `CLAUDE.md`（配置表模式、预填描述符、事务锁、优先级登记）
+2. SPI 设备三步接入法 → `Bsp/stm32f4/spi/bsp_spi.c` 头注释
+3. 照抄范例 → SPI：`bsp_spi.c` 的 `spi_hw_config_t`；器件：`Component/74hc165/74hc165.h`
+4. 新任务三件事：优先级进 `Apps/common/app_common_def.h`、源文件手动加
+   `Apps/CMakeLists.txt`、（如有钩子）进 `Apps/common/app_hooks.c`
+
+---
+
+# 历史进度归档（截至 2026-08-16，P0~P3 全部完成）
 
 ## P0~P2（2026-06-09/10 完成）
-- P0 全部、P1 除 FIX-08（用户跳过）、P2 大部分：见 `doc/architecture-fix-plan-20260609.md`
+- P0 全部、P1 除 FIX-08（用户跳过）、P2 大部分：见 `doc/project/architecture-fix-plan-20260609.md`
 
 ## P3（2026-08-16 收尾）
 - FIX-27: 已确认 bsp_systick.c 无 u8/u16/u32 残留（无需改）
@@ -28,7 +48,7 @@ metadata:
 ## 硬件相关（未提交/待硬件确认）
 - key_scan_app.c 有 Q7\(反相)错接补偿（奇数索引取反），板子改 Q7->SER 接线后应删除
 - KEY_ACTIVE_LEVEL_BITMAP：chip1 active-high，chip0/2 active-low
-- doc/硬件待修改.txt 记录硬件待改事项
+- doc/project/硬件待修改.txt 记录硬件待改事项
 
 ## 2026-08-16 Opus 复审 + P1 修复（同日完成）
 - Opus 全局架构复审结论：健康度 8/10，无 P0，技术债集中在错误路径/扩展路径
@@ -83,13 +103,16 @@ metadata:
   配置表只放"随设备变"的字段；SPI 本体 APB1/APB2 差异已由 base_clk_cmd 覆盖
 
 ## 下一步（2026-08-17 起）
-1. 用户提交本版（commit message 已生成）
+1. ~~提交本版~~ 已完成：4e1d677 已推送（2026-08-16 深夜，经 rebase 解决孪生提交冲突）
 2. 硬件验证按键读数：确认 Q7' 补偿方向和 KEY_ACTIVE_LEVEL_BITMAP 配置；
    板子改 Q7->SER 接线后删除 hc165_raw_to_keys 的补偿步（代码有 TODO 注释）
 3. 小模型开发新驱动（LCD/蓝牙等）：框架已备好——SPI/USART 配置表模式、
    Component 预填描述符惯例、CLAUDE.md 成文约定，照 bsp_spi.c/74hc165.h 抄即可
 4. 触发式待办：新 SPI 设备进场用三步接入法（见 bsp_spi.c 头注释）；
-   usart 协议级 RX（IDLE+DMA+rx_notify 注入）在蓝牙/指纹开发时实现
+   usart 协议级 RX（IDLE+DMA+rx_notify 注入）在蓝牙/指纹开发时实现；
+   **组件需要多实例**（如通用按键矩阵驱动多组 74HC165）→ 套虚表/实例分离
+   +create/destroy 模板，见 doc/knowledge/c-oop-static-vs-dynamic.md（BSP 层保持
+   const 注册表不动）
 
 ## Why: 确保下次对话直接知道修复进度，避免重复检查。
 ## How to apply: 审查修复全部完成；下次会话从"下一步"清单或新需求继续。

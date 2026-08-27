@@ -55,8 +55,8 @@ wuyue_heng/
 │       └── main.h
 │
 ├── doc/                            # 文档
-│   ├── bsp-architecture-summary.md # BSP 架构详细文档
-│   └── cpp-vs-c-oop-pattern.md     # C 实现 C++ 面向对象模式对照
+│   ├── project/                    # 项目文档（评审/修复计划/调试记录）
+│   └── knowledge/                  # 通用知识文档（C/C++ 对照、链接机制）
 │
 └── .claude/                        # AI 辅助开发配置
     ├── MEMORY.md                   # 跨会话记忆
