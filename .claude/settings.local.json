@@ -22,7 +22,12 @@
       "Bash(ls \"C:\\\\Users\\\\Administrator\\\\.claude\\\\projects\\\\C--Users-Administrator\\\\memory\" 2>/dev/null; echo ===; ls \"C:\\\\Users\\\\Administrator\\\\.claude\" | head -15; echo ===; ls \"C:\\\\Users\\\\Administrator\\\\.claude\\\\projects\\\\j--ArmsApprentice-wuyue-heng-2-software-wuyue-heng\" | head)",
       "Read(//c/Users/Administrator/.claude/**)",
       "Bash(cd \"J:\\\\ArmsApprentice\\\\wuyue_heng\\\\2.software\\\\wuyue_heng\" && grep -n \"SystemInit\" Drivers/STM32F4_SPL/CMSIS/Device/ST/STM32F4xx/Source/gcc_ride7/startup_stm32f40_41xxx.s | head -3 && grep -rn \"Drivers/CMakeLists\" -l /dev/null; cat Drivers/CMakeLists.txt | head -60)",
-      "Read(//dev/**)"
+      "Read(//dev/**)",
+      "PowerShell(arm-none-eabi-nm *)",
+      "PowerShell(cmake *)",
+      "PowerShell(Select-String -Path build\\\\build.ninja -Pattern \"bsp_interface\" | Select-Object -First 10 | ForEach-Object { $_.LineNumber.ToString\\(\\) + \": \" + $_.Line.Trim\\(\\) })",
+      "PowerShell(Select-String -Path build\\\\build.ninja -Pattern \"build Bsp/libBsp_Driver\\\\.a\" -Context 0,8 | ForEach-Object { $_.Line; $_.Context.PostContext })",
+      "PowerShell(Select-String -Path build\\\\build.ninja -Pattern \"build Component/libcomponent_lib\\\\.a\" -Context 0,2 | ForEach-Object { $_.Line; $_.Context.PostContext })"
     ],
     "additionalDirectories": [
       "J:\\ArmsApprentice\\wuyue_heng\\2.software\\wuyue_heng\\.claude"

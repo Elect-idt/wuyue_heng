@@ -164,5 +164,14 @@ void KEY_SCAN_SPI_RX_DMA_IRQHandler(void)
 }
 
 /**
+ * @brief  WS2812 LED 发送同步的 RX DMA 中断（路由到 bsp_spi.c）
+ * @note   DMA1_Stream0，SPI3接收DMA完成/错误通知（发送场景下 RX 收 dummy）
+ */
+void WS2812_LED_SPI_RX_DMA_IRQHandler(void)
+{
+    bsp_spi_dma_isr_handler(SPI_ID_WS2812_LED);
+}
+
+/**
  * @}
  */

@@ -31,60 +31,104 @@ typedef void (*spi_clk_cmd_fn)(uint32_t, FunctionalState);
 typedef struct
 {
     GPIO_TypeDef *port;
-    uint16_t      pin;
-    uint16_t      pinsrc;
-    uint8_t       af;
+    uint16_t pin;
+    uint16_t pinsrc;
+    uint8_t af;
 } spi_pin_t;
 
 /* SPI 硬件配置描述符：把每路 SPI 的寄存器/引脚/时钟/DMA 全部集中到一处 */
 typedef struct
 {
-    SPI_TypeDef   *inst;          /* SPI 寄存器基址 */
-    spi_clk_cmd_fn base_clk_cmd;  /* SPI 时钟使能函数（APB1 或 APB2） */
-    uint32_t       base_clk;      /* SPI 时钟外设号 */
-    uint16_t       prescaler;     /* 波特率分频（相对 PCLK） */
+    SPI_TypeDef *inst;           /* SPI 寄存器基址 */
+    spi_clk_cmd_fn base_clk_cmd; /* SPI 时钟使能函数（APB1 或 APB2） */
+    uint32_t base_clk;           /* SPI 时钟外设号 */
+    uint16_t prescaler;          /* 波特率分频（相对 PCLK） */
 
-    uint32_t       gpio_clk;      /* SCK/MISO/MOSI/CS 的 GPIO 时钟外设号（合并） */
-    spi_pin_t      sck;           /* SCK 引脚（AF） */
-    spi_pin_t      miso;          /* MISO 引脚（AF） */
-    spi_pin_t      mosi;          /* MOSI 引脚（AF，全双工发 dummy） */
-    GPIO_TypeDef  *cs_port;       /* CS 端口（软件控制，非 AF，低有效） */
-    uint16_t       cs_pin;        /* CS 引脚 */
+    uint32_t gpio_clk;     /* SCK/MISO/MOSI/CS 的 GPIO 时钟外设号（合并） */
+    spi_pin_t sck;         /* SCK 引脚（AF） */
+    spi_pin_t miso;        /* MISO 引脚（AF） */
+    spi_pin_t mosi;        /* MOSI 引脚（AF，全双工发 dummy） */
+    GPIO_TypeDef *cs_port; /* CS 端口（软件控制，非 AF，低有效） */
+    uint16_t cs_pin;       /* CS 引脚 */
 
-    uint32_t          dma_clk;    /* DMA 控制器时钟外设号 */
-    DMA_Stream_TypeDef *rx_stream;   /* RX DMA 流 */
-    uint32_t          rx_channel;    /* RX DMA 通道 */
-    IRQn_Type         rx_irqn;       /* RX DMA 中断号 */
-    uint32_t          rx_it_tc;      /* RX 传输完成中断标志 */
-    uint32_t          rx_it_te;      /* RX 传输错误中断标志 */
-    uint8_t           rx_pre_pri;    /* NVIC 抢占优先级（必须 >= 5，见 app_common_def.h） */
-    uint8_t           rx_sub_pri;    /* NVIC 子优先级 */
-    DMA_Stream_TypeDef *tx_stream;   /* TX DMA 流 */
-    uint32_t          tx_channel;    /* TX DMA 通道 */
-    uint32_t          tx_it_tc;      /* TX 传输完成中断标志 */
+    uint32_t dma_clk;              /* DMA 控制器时钟外设号 */
+    DMA_Stream_TypeDef *rx_stream; /* RX DMA 流 */
+    uint32_t rx_channel;           /* RX DMA 通道 */
+    IRQn_Type rx_irqn;             /* RX DMA 中断号 */
+    uint32_t rx_it_tc;             /* RX 传输完成中断标志 */
+    uint32_t rx_it_te;             /* RX 传输错误中断标志 */
+    uint8_t rx_pre_pri;            /* NVIC 抢占优先级（必须 >= 5，见 app_common_def.h） */
+    uint8_t rx_sub_pri;            /* NVIC 子优先级 */
+    DMA_Stream_TypeDef *tx_stream; /* TX DMA 流 */
+    uint32_t tx_channel;           /* TX DMA 通道 */
+    uint32_t tx_it_tc;             /* TX 传输完成中断标志 */
 } spi_hw_config_t;
 
 /* 每个逻辑 ID 对应一份硬件配置（新增 SPI 设备只需在此加一行） */
 static const spi_hw_config_t s_spi_cfg[SPI_ID_MAX] = {
-    [SPI_ID_KEY_SCAN] = {
-        .inst = KEY_SCAN_SPI, .base_clk_cmd = KEY_SCAN_SPI_CLK_INIT, .base_clk = KEY_SCAN_SPI_CLK,
-        .prescaler = SPI_BaudRatePrescaler_2, /* 时钟=42MHz/2=21MHz */
-        .gpio_clk = KEY_SCAN_SPI_SCK_GPIO_CLK | KEY_SCAN_SPI_MISO_GPIO_CLK | KEY_SCAN_SPI_MOSI_GPIO_CLK | KEY_SCAN_CS_GPIO_CLK,
-        .sck  = {KEY_SCAN_SPI_SCK_GPIO_PORT,  KEY_SCAN_SPI_SCK_GPIO_PIN,  KEY_SCAN_SPI_SCK_PINSOURCE,  KEY_SCAN_SPI_SCK_AF},
-        .miso = {KEY_SCAN_SPI_MISO_GPIO_PORT, KEY_SCAN_SPI_MISO_GPIO_PIN, KEY_SCAN_SPI_MISO_PINSOURCE, KEY_SCAN_SPI_MISO_AF},
-        .mosi = {KEY_SCAN_SPI_MOSI_GPIO_PORT, KEY_SCAN_SPI_MOSI_GPIO_PIN, KEY_SCAN_SPI_MOSI_PINSOURCE, KEY_SCAN_SPI_MOSI_AF},
-        .cs_port = KEY_SCAN_CS_GPIO_PORT, .cs_pin = KEY_SCAN_CS_GPIO_PIN,
-        .dma_clk = KEY_SCAN_SPI_DMA_CLK,
-        .rx_stream = KEY_SCAN_SPI_RX_DMA_STREAM, .rx_channel = KEY_SCAN_SPI_RX_DMA_CHANNEL,
-        .rx_irqn = KEY_SCAN_SPI_RX_DMA_IRQn, .rx_it_tc = KEY_SCAN_SPI_RX_DMA_IT_TC, .rx_it_te = KEY_SCAN_SPI_RX_DMA_IT_TE,
-        .rx_pre_pri = 6, .rx_sub_pri = 0,
-        .tx_stream = KEY_SCAN_SPI_TX_DMA_STREAM, .tx_channel = KEY_SCAN_SPI_TX_DMA_CHANNEL, .tx_it_tc = KEY_SCAN_SPI_TX_DMA_IT_TC,
-    },
+    [SPI_ID_KEY_SCAN] =
+        {
+            .inst = KEY_SCAN_SPI,
+            .base_clk_cmd = KEY_SCAN_SPI_CLK_INIT,
+            .base_clk = KEY_SCAN_SPI_CLK,
+            .prescaler = SPI_BaudRatePrescaler_2, /* 时钟=42MHz/2=21MHz */
+            .gpio_clk = KEY_SCAN_SPI_SCK_GPIO_CLK | KEY_SCAN_SPI_MISO_GPIO_CLK | KEY_SCAN_SPI_MOSI_GPIO_CLK |
+                        KEY_SCAN_CS_GPIO_CLK,
+            .sck = {KEY_SCAN_SPI_SCK_GPIO_PORT, KEY_SCAN_SPI_SCK_GPIO_PIN, KEY_SCAN_SPI_SCK_PINSOURCE,
+                    KEY_SCAN_SPI_SCK_AF},
+            .miso = {KEY_SCAN_SPI_MISO_GPIO_PORT, KEY_SCAN_SPI_MISO_GPIO_PIN, KEY_SCAN_SPI_MISO_PINSOURCE,
+                     KEY_SCAN_SPI_MISO_AF},
+            .mosi = {KEY_SCAN_SPI_MOSI_GPIO_PORT, KEY_SCAN_SPI_MOSI_GPIO_PIN, KEY_SCAN_SPI_MOSI_PINSOURCE,
+                     KEY_SCAN_SPI_MOSI_AF},
+            .cs_port = KEY_SCAN_CS_GPIO_PORT,
+            .cs_pin = KEY_SCAN_CS_GPIO_PIN,
+            .dma_clk = KEY_SCAN_SPI_DMA_CLK,
+            .rx_stream = KEY_SCAN_SPI_RX_DMA_STREAM,
+            .rx_channel = KEY_SCAN_SPI_RX_DMA_CHANNEL,
+            .rx_irqn = KEY_SCAN_SPI_RX_DMA_IRQn,
+            .rx_it_tc = KEY_SCAN_SPI_RX_DMA_IT_TC,
+            .rx_it_te = KEY_SCAN_SPI_RX_DMA_IT_TE,
+            .rx_pre_pri = 6,
+            .rx_sub_pri = 0,
+            .tx_stream = KEY_SCAN_SPI_TX_DMA_STREAM,
+            .tx_channel = KEY_SCAN_SPI_TX_DMA_CHANNEL,
+            .tx_it_tc = KEY_SCAN_SPI_TX_DMA_IT_TC,
+        },
+    [SPI_ID_WS2812_LED] =
+        {
+            .inst = WS2812_LED_SPI,
+            .base_clk_cmd = WS2812_LED_SPI_CLK_INIT,
+            .base_clk = WS2812_LED_SPI_CLK,
+            /* 42MHz/16=2.625MHz，4 SPI bit 编码 1 个 WS2812 bit：
+             * 1码=0b1100（高762ns>580）、0码=0b1000（高381ns<470），每灯12字节 */
+            .prescaler = SPI_BaudRatePrescaler_16,
+            .gpio_clk = WS2812_LED_SPI_SCK_GPIO_CLK | WS2812_LED_SPI_MISO_GPIO_CLK | WS2812_LED_SPI_MOSI_GPIO_CLK |
+                        WS2812_LED_CS_GPIO_CLK,
+            .sck = {WS2812_LED_SPI_SCK_GPIO_PORT, WS2812_LED_SPI_SCK_GPIO_PIN, WS2812_LED_SPI_SCK_PINSOURCE,
+                    WS2812_LED_SPI_SCK_AF},
+            .miso = {WS2812_LED_SPI_MISO_GPIO_PORT, WS2812_LED_SPI_MISO_GPIO_PIN, WS2812_LED_SPI_MISO_PINSOURCE,
+                     WS2812_LED_SPI_MISO_AF},
+            .mosi = {WS2812_LED_SPI_MOSI_GPIO_PORT, WS2812_LED_SPI_MOSI_GPIO_PIN, WS2812_LED_SPI_MOSI_PINSOURCE,
+                     WS2812_LED_SPI_MOSI_AF},
+            .cs_port = WS2812_LED_CS_GPIO_PORT, /* INVALID：无 CS，见 bsp_spi.h 注释 */
+            .cs_pin = WS2812_LED_CS_GPIO_PIN,
+            .dma_clk = WS2812_LED_SPI_DMA_CLK,
+            .rx_stream = WS2812_LED_SPI_RX_DMA_STREAM,
+            .rx_channel = WS2812_LED_SPI_RX_DMA_CHANNEL,
+            .rx_irqn = WS2812_LED_SPI_RX_DMA_IRQn,
+            .rx_it_tc = WS2812_LED_SPI_RX_DMA_IT_TC,
+            .rx_it_te = WS2812_LED_SPI_RX_DMA_IT_TE,
+            .rx_pre_pri = 6,
+            .rx_sub_pri = 0,
+            .tx_stream = WS2812_LED_SPI_TX_DMA_STREAM,
+            .tx_channel = WS2812_LED_SPI_TX_DMA_CHANNEL,
+            .tx_it_tc = WS2812_LED_SPI_TX_DMA_IT_TC,
+        },
 };
 
 /* DMA同步相关变量 */
-static uint8_t s_dummy_tx = 0xFF;    /* DMA接收时发送dummy字节产生时钟 */
-static uint8_t s_dummy_rx;           /* DMA发送时丢弃接收数据 */
+static uint8_t s_dummy_tx = 0xFF; /* DMA接收时发送dummy字节产生时钟 */
+static uint8_t s_dummy_rx;        /* DMA发送时丢弃接收数据 */
 /* ISR访问的同步指针（按 spi_id 索引，多路 SPI 设备各自 DMA 并发互不覆盖；
  * 单例指针的时代已过去：两路 SPI 并发时后者会覆盖前者的 sync，
  * 前者的 TC 中断会唤醒错误的等待者） */
@@ -115,29 +159,47 @@ static void spi_gpio_config(const spi_hw_config_t *cfg)
      * 参数化常量只会掩盖"只有 SPI 本体时钟（APB1/APB2）真正可变"这一事实 */
     RCC_AHB1PeriphClockCmd(cfg->gpio_clk, ENABLE);
 
-    /* CS 配置：GPIO_Mode_OUT（软件控制 CS，非 AF），初始拉高（失能） */
+    /* CS 配置：GPIO_Mode_OUT（软件控制 CS，非 AF），初始拉高（失能）。
+     * 无 CS 的器件（如 WS2812 单线器件）填 SPI_GPIO_PORT_INVALID 跳过 */
+    if (cfg->cs_port != SPI_GPIO_PORT_INVALID)
+    {
+        GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+        GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
+        GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+        GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
+        GPIO_InitStructure.GPIO_Pin = cfg->cs_pin;
+        GPIO_Init(cfg->cs_port, &GPIO_InitStructure);
+        GPIO_SetBits(cfg->cs_port, cfg->cs_pin);
+    }
+
+    /* SCK/MISO/MOSI 配置为 AF。逐引脚守卫：未使用的引脚填
+     * SPI_GPIO_PORT_INVALID（如 WS2812 只用 MOSI，SCK/MISO 释放另用），
+     * 每个引脚独立判断，互不牵连 */
     GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
-    GPIO_InitStructure.GPIO_Pin = cfg->cs_pin;
-    GPIO_Init(cfg->cs_port, &GPIO_InitStructure);
-    GPIO_SetBits(cfg->cs_port, cfg->cs_pin);
-
-    /* SCK/MISO/MOSI 配置为 AF（全双工模式下 MOSI 也需配置，用于发 dummy 产生时钟） */
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-    GPIO_InitStructure.GPIO_Pin = cfg->sck.pin;
-    GPIO_Init(cfg->sck.port, &GPIO_InitStructure);
-    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
-    GPIO_InitStructure.GPIO_Pin = cfg->miso.pin;
-    GPIO_Init(cfg->miso.port, &GPIO_InitStructure);
-    GPIO_InitStructure.GPIO_Pin = cfg->mosi.pin;
-    GPIO_Init(cfg->mosi.port, &GPIO_InitStructure);
-
-    /* 连接引脚到 SPI 复用功能 */
-    GPIO_PinAFConfig(cfg->sck.port, cfg->sck.pinsrc, cfg->sck.af);
-    GPIO_PinAFConfig(cfg->miso.port, cfg->miso.pinsrc, cfg->miso.af);
-    GPIO_PinAFConfig(cfg->mosi.port, cfg->mosi.pinsrc, cfg->mosi.af);
+    if (cfg->sck.port != SPI_GPIO_PORT_INVALID)
+    {
+        GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
+        GPIO_InitStructure.GPIO_Pin = cfg->sck.pin;
+        GPIO_Init(cfg->sck.port, &GPIO_InitStructure);
+        GPIO_PinAFConfig(cfg->sck.port, cfg->sck.pinsrc, cfg->sck.af);
+    }
+    if (cfg->miso.port != SPI_GPIO_PORT_INVALID)
+    {
+        GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+        GPIO_InitStructure.GPIO_Pin = cfg->miso.pin;
+        GPIO_Init(cfg->miso.port, &GPIO_InitStructure);
+        GPIO_PinAFConfig(cfg->miso.port, cfg->miso.pinsrc, cfg->miso.af);
+    }
+    if (cfg->mosi.port != SPI_GPIO_PORT_INVALID)
+    {
+        /* 全双工发 dummy 时也需 MOSI；单线器件（WS2812）只有这个引脚是本体的 */
+        GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_DOWN;
+        GPIO_InitStructure.GPIO_Pin = cfg->mosi.pin;
+        GPIO_Init(cfg->mosi.port, &GPIO_InitStructure);
+        GPIO_PinAFConfig(cfg->mosi.port, cfg->mosi.pinsrc, cfg->mosi.af);
+    }
 }
 
 /**
@@ -214,6 +276,12 @@ static bsp_status_e stm32f4_spi_control(spi_id_e id, spi_control_e state)
     {
         return BSP_STAT_CHOOSE_ERROR_TARGET;
     }
+    /* 无 CS 的器件（SPI_GPIO_PORT_INVALID）：片选是空操作，直接成功，
+     * 防止对 NULL 端口做 GPIO_SetBits 触发 HardFault */
+    if (cfg->cs_port == SPI_GPIO_PORT_INVALID)
+    {
+        return BSP_STAT_TRUE;
+    }
     if (SPI_STATE_ENABLE == state)
     {
         GPIO_ResetBits(cfg->cs_port, cfg->cs_pin); /* CS 低有效：拉低选中 */
@@ -278,7 +346,7 @@ static bsp_status_e spi_send_byte(spi_id_e id, uint8_t send_data)
  * @param  receive_data:要保存读取字节的地址
  * @retval status:0 无错误；其他 有错误
  */
-static bsp_status_e spi_receive_byte(spi_id_e id, uint8_t* receive_data)
+static bsp_status_e spi_receive_byte(spi_id_e id, uint8_t *receive_data)
 {
     const spi_hw_config_t *cfg = spi_get_cfg(id);
     uint32_t stm32f4_timeout;
@@ -342,7 +410,8 @@ static void spi_tx_dma_config(const spi_hw_config_t *cfg, const uint8_t *mem_add
         uint32_t dma_stop_timeout = SPI_TIME_OUT;
         while (DMA_GetCmdStatus(cfg->tx_stream) != DISABLE)
         {
-            if (dma_stop_timeout-- == 0) break;
+            if (dma_stop_timeout-- == 0)
+                break;
         }
     }
     /* 复位流的所有寄存器到默认值，防止上次配置残留 */
@@ -350,22 +419,22 @@ static void spi_tx_dma_config(const spi_hw_config_t *cfg, const uint8_t *mem_add
     /* 清除上次传输遗留的中断标志位，避免配置后立即误触发中断 */
     DMA_ClearITPendingBit(cfg->tx_stream, cfg->tx_it_tc);
 
-    DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)(&(cfg->inst->DR));   // 外设基址：SPI数据寄存器
-    DMA_InitStructure.DMA_Memory0BaseAddr = (uint32_t)mem_addr;                // 存储器地址（发送数据源）
-    DMA_InitStructure.DMA_DIR = DMA_DIR_MemoryToPeripheral;                    // 方向：内存->外设（发送）
-    DMA_InitStructure.DMA_BufferSize = data_size;                              // 传输数据个数
-    DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;           // 外设地址不递增（DR只有一个）
+    DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)(&(cfg->inst->DR)); // 外设基址：SPI数据寄存器
+    DMA_InitStructure.DMA_Memory0BaseAddr = (uint32_t)mem_addr;              // 存储器地址（发送数据源）
+    DMA_InitStructure.DMA_DIR = DMA_DIR_MemoryToPeripheral;                  // 方向：内存->外设（发送）
+    DMA_InitStructure.DMA_BufferSize = data_size;                            // 传输数据个数
+    DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;         // 外设地址不递增（DR只有一个）
     DMA_InitStructure.DMA_MemoryInc = mem_inc ? DMA_MemoryInc_Enable : DMA_MemoryInc_Disable; // 内存地址递增/不递增
-    DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;    // 外设数据宽度：字节
-    DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;            // 内存数据宽度：字节
-    DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;                              // 单次传输模式
-    DMA_InitStructure.DMA_Priority = DMA_Priority_High;                        // 优先级：高
-    DMA_InitStructure.DMA_FIFOMode = DMA_FIFOMode_Disable;                     // 直连模式（不用FIFO）
-    DMA_InitStructure.DMA_FIFOThreshold = DMA_FIFOThreshold_HalfFull;          // FIFO阈值（直连模式下无效）
-    DMA_InitStructure.DMA_MemoryBurst = DMA_MemoryBurst_Single;                // 单次突发
-    DMA_InitStructure.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;        // 单次突发
-    DMA_InitStructure.DMA_Channel = cfg->tx_channel;                           // DMA通道（通道存在于流中）
-    DMA_Init(cfg->tx_stream, &DMA_InitStructure);                              // 初始化TX DMA流
+    DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;                   // 外设数据宽度：字节
+    DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;                           // 内存数据宽度：字节
+    DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;                                             // 单次传输模式
+    DMA_InitStructure.DMA_Priority = DMA_Priority_High;                                       // 优先级：高
+    DMA_InitStructure.DMA_FIFOMode = DMA_FIFOMode_Disable;                                    // 直连模式（不用FIFO）
+    DMA_InitStructure.DMA_FIFOThreshold = DMA_FIFOThreshold_HalfFull;   // FIFO阈值（直连模式下无效）
+    DMA_InitStructure.DMA_MemoryBurst = DMA_MemoryBurst_Single;         // 单次突发
+    DMA_InitStructure.DMA_PeripheralBurst = DMA_PeripheralBurst_Single; // 单次突发
+    DMA_InitStructure.DMA_Channel = cfg->tx_channel;                    // DMA通道（通道存在于流中）
+    DMA_Init(cfg->tx_stream, &DMA_InitStructure);                       // 初始化TX DMA流
 }
 
 /**
@@ -386,7 +455,8 @@ static void spi_rx_dma_config(const spi_hw_config_t *cfg, uint8_t *mem_addr, uin
         uint32_t dma_stop_timeout = SPI_TIME_OUT;
         while (DMA_GetCmdStatus(cfg->rx_stream) != DISABLE)
         {
-            if (dma_stop_timeout-- == 0) break;
+            if (dma_stop_timeout-- == 0)
+                break;
         }
     }
     /* 复位流的所有寄存器到默认值，防止上次配置残留 */
@@ -395,22 +465,22 @@ static void spi_rx_dma_config(const spi_hw_config_t *cfg, uint8_t *mem_addr, uin
     DMA_ClearITPendingBit(cfg->rx_stream, cfg->rx_it_tc);
     DMA_ClearITPendingBit(cfg->rx_stream, cfg->rx_it_te);
 
-    DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)(&(cfg->inst->DR));   // 外设基址：SPI数据寄存器
-    DMA_InitStructure.DMA_Memory0BaseAddr = (uint32_t)mem_addr;                // 存储器地址（接收数据目标）
-    DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralToMemory;                    // 方向：外设->内存（接收）
-    DMA_InitStructure.DMA_BufferSize = data_size;                              // 传输数据个数
-    DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;           // 外设地址不递增（DR只有一个）
+    DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)(&(cfg->inst->DR)); // 外设基址：SPI数据寄存器
+    DMA_InitStructure.DMA_Memory0BaseAddr = (uint32_t)mem_addr;              // 存储器地址（接收数据目标）
+    DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralToMemory;                  // 方向：外设->内存（接收）
+    DMA_InitStructure.DMA_BufferSize = data_size;                            // 传输数据个数
+    DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;         // 外设地址不递增（DR只有一个）
     DMA_InitStructure.DMA_MemoryInc = mem_inc ? DMA_MemoryInc_Enable : DMA_MemoryInc_Disable; // 内存地址递增/不递增
-    DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;    // 外设数据宽度：字节
-    DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;            // 内存数据宽度：字节
-    DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;                              // 单次传输模式
-    DMA_InitStructure.DMA_Priority = DMA_Priority_High;                        // 优先级：高
-    DMA_InitStructure.DMA_FIFOMode = DMA_FIFOMode_Disable;                     // 直连模式（不用FIFO）
-    DMA_InitStructure.DMA_FIFOThreshold = DMA_FIFOThreshold_HalfFull;          // FIFO阈值（直连模式下无效）
-    DMA_InitStructure.DMA_MemoryBurst = DMA_MemoryBurst_Single;                // 单次突发
-    DMA_InitStructure.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;        // 单次突发
-    DMA_InitStructure.DMA_Channel = cfg->rx_channel;                           // DMA通道（通道存在于流中）
-    DMA_Init(cfg->rx_stream, &DMA_InitStructure);                              // 初始化RX DMA流
+    DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;                   // 外设数据宽度：字节
+    DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;                           // 内存数据宽度：字节
+    DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;                                             // 单次传输模式
+    DMA_InitStructure.DMA_Priority = DMA_Priority_High;                                       // 优先级：高
+    DMA_InitStructure.DMA_FIFOMode = DMA_FIFOMode_Disable;                                    // 直连模式（不用FIFO）
+    DMA_InitStructure.DMA_FIFOThreshold = DMA_FIFOThreshold_HalfFull;   // FIFO阈值（直连模式下无效）
+    DMA_InitStructure.DMA_MemoryBurst = DMA_MemoryBurst_Single;         // 单次突发
+    DMA_InitStructure.DMA_PeripheralBurst = DMA_PeripheralBurst_Single; // 单次突发
+    DMA_InitStructure.DMA_Channel = cfg->rx_channel;                    // DMA通道（通道存在于流中）
+    DMA_Init(cfg->rx_stream, &DMA_InitStructure);                       // 初始化RX DMA流
 }
 
 /**
@@ -446,8 +516,8 @@ static void spi_dma_cleanup(spi_id_e id)
  * @param  sync:DMA同步机制（NULL时不等待）
  * @retval status:0 无错误；其他 有错误
  */
-static bsp_status_e spi_send_multi_data_dma(spi_id_e id, const uint8_t* send_data, uint32_t data_size,
-                                             const spi_dma_sync_t *sync)
+static bsp_status_e spi_send_multi_data_dma(spi_id_e id, const uint8_t *send_data, uint32_t data_size,
+                                            const spi_dma_sync_t *sync)
 {
     const spi_hw_config_t *cfg = spi_get_cfg(id);
     if (cfg == NULL)
@@ -507,8 +577,8 @@ static bsp_status_e spi_send_multi_data_dma(spi_id_e id, const uint8_t* send_dat
  * @param  sync:DMA同步机制（NULL时不等待）
  * @retval status:0 无错误；其他 有错误
  */
-static bsp_status_e spi_receive_multi_data_dma(spi_id_e id, uint8_t* receive_data, uint32_t data_size,
-                                                const spi_dma_sync_t *sync)
+static bsp_status_e spi_receive_multi_data_dma(spi_id_e id, uint8_t *receive_data, uint32_t data_size,
+                                               const spi_dma_sync_t *sync)
 {
     const spi_hw_config_t *cfg = spi_get_cfg(id);
     if (cfg == NULL)

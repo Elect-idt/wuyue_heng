@@ -16,6 +16,9 @@
 /* 按键扫描任务：10ms 周期 DMA 读取，高优先级保证节拍稳定 */
 #define KEY_SCAN_TASK_PRI 4
 
+/* LED 灯效任务：20ms 周期刷新，低于按键扫描（节拍更硬），高于心跳闪烁 */
+#define LED_RGB_DISPLAY_TASK_PRI 3
+
 /* LED 状态任务：300ms 心跳闪烁，低优先级即可 */
 #define LED_STATUS_TASK_PRI 2
 

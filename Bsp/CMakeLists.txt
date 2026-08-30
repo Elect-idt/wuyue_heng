@@ -101,11 +101,18 @@ endif()
 # 将平台源文件 + Bsp_Interface的对象文件一起打包进 Bsp_Driver
 #
 # $<TARGET_OBJECTS:Bsp_Interface> 的作用：
-#   把 Bsp_Interface 编译出的 bsp_interface.o 直接注入 Bsp_Driver
+#   把 Bsp_Interface 编译出的 bsp_interface.o 显式注入 Bsp_Driver
 #   最终 bsp_interface.o 和 stm32f4_bsp.o 都在同一个 libBsp_Driver.a 内
 #   同一个 .a 内链接器会反复扫描直到所有符号解析完毕（收敛）
 #
-# 这句不能删：删了则 bsp_interface.o 没人用，Bsp_Init() 从最终 .elf 中消失
+# 注意（2026-08-28 实验验证）：bsp_interface.o 进归档有两条冗余通道——
+#   ① 本句 $<TARGET_OBJECTS:>（显式注入，自文档化）
+#   ② 下方 target_link_libraries(Bsp_Driver PUBLIC Bsp_Interface)：
+#     CMake>=3.12 链接 OBJECT 库到 STATIC 库会自动把 .o 打进归档
+#   CMake 对重复 .o 去重（build.ninja 归档规则只出现一次）。
+#   单删①构建不坏（②兜底，ninja 甚至 no work to do）；
+#   ①②同时删除，bsp_interface.o 才会无人引用（不在任何 .a、不上链接行），
+#   Bsp_Init()/g_board_hw_bsp_ 从 .elf 消失，Apps/Core 调用点全部 undefined reference
 # =====================================================================
 target_sources(Bsp_Driver PRIVATE
     ${Bsp_Platform_Src}
@@ -116,9 +123,12 @@ target_sources(Bsp_Driver PRIVATE
 # Bsp_Driver 的依赖关系
 #
 # PUBLIC Bsp_Interface：
-#   传播头文件路径（-IBsp/common -IBsp）给依赖 Bsp_Driver 的 target（如 Apps）
-#   注意：Bsp_Interface 是 OBJECT 库，没有 .a 文件，PUBLIC 只传播 -I 路径
-#   不传播 -lBsp_Interface，所以最终链接命令里只有 -lBsp_Driver
+#   传播头文件路径（-IBsp/common -IBsp）给本 target 和下游（如 Apps）
+#   注意：Bsp_Interface 是 OBJECT 库，没有 .a 文件，PUBLIC 不给下游传播
+#   -lBsp_Interface（最终链接命令里只有 -lBsp_Driver），但除路径外它还会
+#   把 bsp_interface.o 自动打进本归档（CMake>=3.12，与上方
+#   $<TARGET_OBJECTS:> 冗余，见上注）；.o 只注入直接消费者，不再向下游传播
+#   （验证过 libcomponent_lib.a 归档规则中无 bsp_interface.o）
 #   这句不能删：删了则 stm32f4_bsp.c 编译时找不到 bsp_interface.h
 #
 # PRIVATE StdPeriph_Driver：

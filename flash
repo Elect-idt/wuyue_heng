@@ -1,6 +1,14 @@
 source [find interface/stlink.cfg]
 source [find target/stm32f4x.cfg]
 
+# 连接失败的排查配置：
+#   connect_assert_srst = 复位期间建立 SWD 连接（对付固件把调试端口搞挂的情况）
+#     注意：需要 ST-Link 的 NRST 线接到板子；若报 srst 相关错误说明 NRST 没接，
+#     删掉这行，改用"断电重上 + 手按住复位键再启动 openocd"的办法
+#   adapter speed 降档 = 杂牌 ST-Link/杜邦线在 2MHz 下偶发握手失败
+reset_config connect_assert_srst
+adapter speed 1000
+
 program J:/ArmsApprentice/wuyue_heng/2.software/wuyue_heng/build/wuyue_heng.bin 0x08000000 verify reset exit
 
 # you can use this file by executing openocd -f flash in your terminal

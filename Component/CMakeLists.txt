@@ -15,6 +15,7 @@ add_library(component_lib STATIC)
 set(Component_Src
     ${CMAKE_SOURCE_DIR}/Component/led/led.c
     ${CMAKE_SOURCE_DIR}/Component/74hc165/74hc165.c
+    ${CMAKE_SOURCE_DIR}/Component/ws2812_led/ws2812_led.c
 )
 target_sources(component_lib PRIVATE ${Component_Src})
 
@@ -22,6 +23,7 @@ target_sources(component_lib PRIVATE ${Component_Src})
 target_include_directories(component_lib PUBLIC
     ${CMAKE_SOURCE_DIR}/Component/led
     ${CMAKE_SOURCE_DIR}/Component/74hc165
+    ${CMAKE_SOURCE_DIR}/Component/ws2812_led
 )
 
 # Component 只依赖 Bsp_Interface（通过 Bsp_Driver PUBLIC 传播）

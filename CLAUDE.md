@@ -21,10 +21,11 @@ wuyue_heng/
 │       └── spi/ bsp_spi.c      SPI驱动（DMA + sync注入）
 ├── Component/              ← 器件协议抽象层（RTOS无关）
 │   ├── led/                   LED器件（基于gpio_ops_t，active_low映射）
-│   └── 74hc165/               74HC165移位寄存器（PL+CE+SPI DMA）
+│   ├── 74hc165/               74HC165移位寄存器（PL+CE+SPI DMA）
+│   └── ws2812_led/            WS2812B可寻址RGB灯（SPI 4bit编码，纯写器件）
 ├── Drivers/                ← STM32 SPL标准外设库
 ├── FreeRTOS/               ← FreeRTOS内核
-├── Apps/                   ← 应用层（LED任务、按键扫描任务）
+├── Apps/                   ← 应用层（LED任务、按键扫描任务、RGB灯效任务）
 ├── Core/src/               ← main.c, syscalls.c, sysmem.c（平台无关）
 └── doc/
     ├── project/                ← 项目文档（评审/修复计划/调试记录/硬件待办）
@@ -48,7 +49,7 @@ app_task_lib (STATIC)            ← 链接 Bsp_Driver + component_lib + FreeRTO
 - bsp_interface.c 是平台工厂，`#if` 宏选的具体描述符 `g_stm32f4_bsp_` 定义在 stm32f4_bsp.c（Bsp_Driver）
 - 单向依赖：bsp_interface.o 引用 g_stm32f4_bsp_。若分成两个 .a，链接器单遍扫描会让 bsp_interface.o 落在 libBsp_Driver.a 之后，引用无法满足 → undefined reference
 - OBJECT 把 bsp_interface.o 注入 libBsp_Driver.a，同一归档内链接器反复扫描收敛，对链接顺序免疫
-- $<TARGET_OBJECTS:> 拿来 .o 文件，target_link_libraries 传播头文件路径，两者缺一不可
+- bsp_interface.o 进归档有两条冗余通道（CMake≥3.12）：`$<TARGET_OBJECTS:>` 显式注入 + `target_link_libraries(Bsp_Driver PUBLIC Bsp_Interface)` 自动打包 .o（后者兼传播头文件路径）。CMake 去重，删任一条构建不坏，两条全删 Bsp_Init 才消失
 
 ### 编译隔离保证
 - Bsp_Interface 只链接 bsp_common_interface → 看不到 stm32f4xx.h
@@ -98,6 +99,7 @@ app_task_lib (STATIC)            ← 链接 Bsp_Driver + component_lib + FreeRTO
 - BSP/common/ 是平台无关的；bsp_interface.c 是"平台工厂 + 平台无关调度"——编译期用 #if 宏选具体平台描述符（新增平台加 #elif 宏隔离，不波及 Apps）。CMake 编译隔离保证它不能 include 平台头文件（头文件级平台无关），但作为工厂它仍 extern 命名平台描述符
 - 外设驱动接口定义在 Bsp/common/*_interface.h，实现在 Bsp/stm32f4/*/
 - 器件协议定义在 Component/*/\*.h，组合 BSP 接口实现器件级操作
+- **SPI 引脚可选**：`spi_hw_config_t` 的引脚字段填 `SPI_GPIO_PORT_INVALID`（0）表示该引脚不用（如 WS2812 只用 MOSI），gpio_config 逐引脚守卫跳过配置、引脚释放另用；无 CS 的器件 cs_control 为空操作。哨兵只用于 PORT 指针字段，CLK 掩码字段照实填
 - **Component 器件统一"预填描述符"构造**：调用方用 C99 指定初始化器预填器件 struct（字段自文档、无参数错位），`xxx_init(dev)` 只做必填字段校验 + 硬件初始化，不再收长参数列表。参考 74hc165.h/led.h 的契约注释。器件出现运行时状态时升级为独立 cfg 结构体 + `init(dev, &cfg)`
 - **事务互斥**：多字节/多步器件事务（如 hc165 的 PL+CS+DMA）用 `bsp_lock_t`（Bsp/common）注入保护，Apps 创建锁对象并注入；共享同一总线/器件的多个消费者必须注入**同一个** bsp_lock_t 实例（拓扑决策在组合根）。单次 GPIO 写的简单器件（LED）不需要锁
 - g_board_hw_bsp_ 是全局单例，Apps 通过它访问所有硬件

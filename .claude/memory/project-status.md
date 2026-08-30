@@ -9,12 +9,14 @@ metadata:
 
 # wuyue_heng 项目状态（新会话从这里开始）
 
-## 当前状态快照（2026-08-16 收工）
-- **代码**：全绿编译（零错误零警告，Flash 6.35%），最新提交 4e1d677 已推送 GitHub
-- **硬件验证**：⚠ 仅旧版按键扫描上板跑通过；**2026-08-16 的全部重构
-  （SPI V3.0 配置表、P1/P2 修复、预填描述符）只过了编译，未上板**。
-  继续开发前建议先烧录验证按键读数正常（见"下一步"第 2 条）
-- **架构**：审查清单全部清零（P0~P3+P1+P2），框架进入可复制扩展状态
+## 当前状态快照（2026-08-17 更新）
+- **代码**：全绿编译（零错误零警告，Flash 6.63%）
+- **硬件验证**：
+  - 按键扫描（旧版）✓
+  - **WS2812 灯效链路 ✓（2026-08-17 首灯红色点亮）**：SPI3@2.625MHz/4bit编码/
+    GRB序/DMA+ISR路由/RESET锁存全链路过真实芯片。组件 Component/ws2812_led
+  - 尚未验证：2026-08-16 的 SPI V3.0 重构后按键扫描回归（大概率没事，同一晚改的）
+- **架构**：审查清单全部清零，三路 SPI 接入模式（KEY_SCAN/WS2812）已实战两例
 - 本文件是进度+决策中枢；架构规则看 CLAUDE.md（自动加载）；
   CMake/CCMRAM 深层知识看本目录两个 reference 文件
 
@@ -104,15 +106,20 @@ metadata:
 
 ## 下一步（2026-08-17 起）
 1. ~~提交本版~~ 已完成：4e1d677 已推送（2026-08-16 深夜，经 rebase 解决孪生提交冲突）
-2. 硬件验证按键读数：确认 Q7' 补偿方向和 KEY_ACTIVE_LEVEL_BITMAP 配置；
-   板子改 Q7->SER 接线后删除 hc165_raw_to_keys 的补偿步（代码有 TODO 注释）
-3. 小模型开发新驱动（LCD/蓝牙等）：框架已备好——SPI/USART 配置表模式、
-   Component 预填描述符惯例、CLAUDE.md 成文约定，照 bsp_spi.c/74hc165.h 抄即可
-4. 触发式待办：新 SPI 设备进场用三步接入法（见 bsp_spi.c 头注释）；
+2. **WS2812 灯效引擎**（进行中）：led_rgb_display_app 已跑通 20ms 节拍 + 首灯红冒烟；
+   待实现 led_effect_tick 模式状态机（单色/七彩/呼吸/涟漪/按键亮）+ on-change 跳发
+   （两处 TODO 标记在 led_rgb_display_app.c）
+3. **按键事件队列**：key_scan → led_rgb_display 的通道（涟漪/按键亮的输入源），
+   推荐 xQueue 边沿事件
+4. 硬件遗留：确认 Q7' 补偿方向和 KEY_ACTIVE_LEVEL_BITMAP；板子改 Q7->SER 接线后
+   删除 hc165_raw_to_keys 的补偿步（代码有 TODO）
+5. 触发式待办：新 SPI 设备三步接入法（见 bsp_spi.c 头注释）；
    usart 协议级 RX（IDLE+DMA+rx_notify 注入）在蓝牙/指纹开发时实现；
    **组件需要多实例**（如通用按键矩阵驱动多组 74HC165）→ 套虚表/实例分离
    +create/destroy 模板，见 doc/knowledge/c-oop-static-vs-dynamic.md（BSP 层保持
    const 注册表不动）
+6. 烧录提示：openocd 的 flash 配置已含 connect_assert_srst + 1MHz（排查
+   "init mode failed"时加的，事实证明是杜邦线松了，配置留着无害）
 
 ## Why: 确保下次对话直接知道修复进度，避免重复检查。
 ## How to apply: 审查修复全部完成；下次会话从"下一步"清单或新需求继续。

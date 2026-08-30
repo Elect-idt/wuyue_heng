@@ -39,25 +39,32 @@ target_sources(Bsp_Driver PRIVATE
 | 合并成一个 STATIC | 失去编译隔离（bsp_interface.c 能看到 STM32 头文件） |
 | 注册机制消除循环 | 需要 `__attribute__((constructor))`，裸机不一定支持 |
 
-## $<TARGET_OBJECTS:> vs target_link_libraries 的区别
+## $<TARGET_OBJECTS:> vs target_link_libraries 的关系
 
-两者做不同的事，缺一不可：
+**两条 .o 注入通道冗余**（CMake>=3.12；2026-08-28 实验验证：单删
+$<TARGET_OBJECTS:> 后 build.ninja 归档规则仍含 bsp_interface.c.obj，
+ninja 报 no work to do，构建不坏）：
 
 | | `$<TARGET_OBJECTS:Bsp_Interface>` | `target_link_libraries(Bsp_Driver PUBLIC Bsp_Interface)` |
 |---|---|---|
-| 作用 | 拿来 .o 文件 | 传播使用需求（头文件路径等） |
-| 影响什么 | 最终 .a 里包含什么 | 编译时 -I 参数 |
+| .o 进归档 | 是（显式列出，自文档化） | 是（链接 OBJECT 库到 STATIC 库自动打包 .o） |
+| 头文件路径 | 不传播 | 传播（-I 给本 target 和下游） |
+| 下游 -l | — | 不产生（OBJECT 无 .a 可链） |
 
-- 删 $<TARGET_OBJECTS:> → bsp_interface.o 没人用，Bsp_Init() 消失
-- 删 target_link_libraries → stm32f4_bsp.c 找不到 bsp_interface.h
+- 两条全删 → bsp_interface.o 无人引用（不在任何 .a、不上链接行），
+  Bsp_Init()/g_board_hw_bsp_ 消失，Apps/Core 调用点全部 undefined reference
+- 只删 target_link_libraries → stm32f4_bsp.c 编译时找不到 bsp_interface.h
+  （.o 注入仍有 $<TARGET_OBJECTS:> 兜底，链接不受影响）
 
 ## OBJECT 库的 PUBLIC 传播
 
-OBJECT 库没有 .a 文件，所以 PUBLIC 只传播头文件路径，不传播 .o 文件：
-- STATIC + PUBLIC → 传播头文件路径 + -lxxx（链接命令加 .a）
-- OBJECT + PUBLIC → 只传播头文件路径（没有 .a 可以传播）
-
-因此最终链接命令里不会出现 -lBsp_Interface，只有 -lBsp_Driver。
+OBJECT 库没有 .a 文件，PUBLIC 不给下游传播 -l（下游链接命令不出现
+-lBsp_Interface，只有 -lBsp_Driver），但除头文件路径外还会把 .o 打进
+**直接消费者**的 STATIC 归档：
+- STATIC + PUBLIC → 传播头文件路径 + -lxxx（下游链接命令加 .a）
+- OBJECT + PUBLIC → 传播头文件路径 + .o 打进直接消费者的归档
+  （不再向下游传播 .o：验证过 libcomponent_lib.a 归档规则中无
+  bsp_interface.o，下游用的是已含该 .o 的 libBsp_Driver.a）
 
 ## 编译 vs 链接
 

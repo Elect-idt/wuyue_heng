@@ -37,12 +37,12 @@ static const uint8_t s_key_active_level[KEY_SCAN_NUM_CHIPS] = KEY_ACTIVE_LEVEL_B
 static SemaphoreHandle_t s_spi_dma_sem;
 static spi_dma_sync_t s_spi_dma_sync;
 
-static bool spi_dma_wait(void* handle, uint32_t timeout_ms)
+static bool spi_dma_wait(void *handle, uint32_t timeout_ms)
 {
     return xSemaphoreTake((SemaphoreHandle_t)handle, pdMS_TO_TICKS(timeout_ms)) == pdTRUE;
 }
 
-static void spi_dma_notify_from_isr(void* handle)
+static void spi_dma_notify_from_isr(void *handle)
 {
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
     xSemaphoreGiveFromISR((SemaphoreHandle_t)handle, &xHigherPriorityTaskWoken);
@@ -69,7 +69,7 @@ static void hc165_raw_to_keys(const uint8_t raw[KEY_SCAN_NUM_CHIPS], uint8_t key
     }
 }
 
-void Key_Scan_Task(void* param)
+void Key_Scan_Task(void *param)
 {
     static TickType_t PreviousWakeTime;
     PreviousWakeTime = xTaskGetTickCount();

@@ -8,10 +8,9 @@
 // 定义SPI的逻辑ID
 typedef enum
 {
-    // SPI_ID_LCD        = 0,    // LCD SPI
     SPI_ID_KEY_SCAN   = 0,    // 键盘扫描74HC165 HSPI
-    // SPI_ID_LED_Array  = 2,    // 指纹SPI
-    SPI_ID_MAX        = 1,    // MAX
+    SPI_ID_WS2812_LED   = 1,    // 键盘LED矩阵，LED用单线SPI
+    SPI_ID_MAX        = 2,    // MAX
 } spi_id_e;
 
 // DMA同步机制（BSP层不依赖RTOS，通过函数指针注入同步原语）

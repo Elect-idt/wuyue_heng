@@ -44,7 +44,15 @@ int32_t AppTaskCreate(void)
         status = APP_TASK_FAIL;
     }
 
-    /* ②创建LED状态任务 */
+    /* ②创建RGB灯效任务（20ms周期刷新） */
+    xReturn = xTaskCreate((TaskFunction_t)Led_RGB_Display_Task, (const char*)"Led_RGB_Task", (uint16_t)256, (void*)NULL,
+                          (UBaseType_t)LED_RGB_DISPLAY_TASK_PRI, (TaskHandle_t*)NULL);
+    if (pdPASS != xReturn)
+    {
+        status = APP_TASK_FAIL;
+    }
+
+    /* ③创建LED状态任务 */
     xReturn = xTaskCreate((TaskFunction_t)Led_Status_Task, (const char*)"Led_Status_Task", (uint16_t)256, (void*)NULL,
                           (UBaseType_t)LED_STATUS_TASK_PRI, (TaskHandle_t*)NULL);
     if (pdPASS != xReturn)

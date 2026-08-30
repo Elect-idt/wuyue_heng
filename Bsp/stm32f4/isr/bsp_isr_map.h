@@ -25,4 +25,8 @@
  * TX DMA 不开中断——全双工下 RX 收完即代表 TX 也发完，用 RX TC 通知即可。 */
 #define KEY_SCAN_SPI_RX_DMA_IRQHandler     DMA1_Stream3_IRQHandler
 
+/* WS2812 RGB LED（SPI3）：发送同步同样用 RX DMA TC 通知（DMA1_Stream0），
+ * 路由到 bsp_spi_dma_isr_handler(SPI_ID_WS2812_LED) */
+#define WS2812_LED_SPI_RX_DMA_IRQHandler     DMA1_Stream0_IRQHandler
+
 #endif /* __BSP_ISR_MAP_H_ */

@@ -15,6 +15,7 @@ set(App_Task_Src
     ${CMAKE_SOURCE_DIR}/Apps/app_init.c                 # 应用初始化（创建 FreeRTOS 任务）
     ${CMAKE_SOURCE_DIR}/Apps/led_status_app/led_status_app.c    # LED 状态任务
     ${CMAKE_SOURCE_DIR}/Apps/key_scan_app/key_scan_app.c        # 按键扫描任务
+    ${CMAKE_SOURCE_DIR}/Apps/led_rgb_display_app/led_rgb_display_app.c   # RGB 灯效任务
 )
 
 # =====================================================================
@@ -41,6 +42,7 @@ target_include_directories(app_task_interface INTERFACE
     ${CMAKE_SOURCE_DIR}/Apps/common              # app_common_def.h（任务优先级等公共配置）
     ${CMAKE_SOURCE_DIR}/Apps/led_status_app       # LED 任务头文件
     ${CMAKE_SOURCE_DIR}/Apps/key_scan_app         # 按键扫描任务头文件
+    ${CMAKE_SOURCE_DIR}/Apps/led_rgb_display_app     # RGB 灯效任务头文件
 )
 
 add_library(app_task_lib STATIC)
